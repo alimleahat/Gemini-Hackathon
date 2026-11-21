@@ -307,6 +307,11 @@
             <h2 id="board-title">Virtual FPGA Board</h2>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="input-tabs board-view-tabs" role="tablist" aria-label="Board View Mode">
+              <button type="button" class="tab-btn active" id="btn-view-3d" data-board-view="3d">3D Board</button>
+              <button type="button" class="tab-btn" id="btn-view-2d" data-board-view="2d">2D Board</button>
+            </div>
+            <button type="button" id="btn-reset-cam3d" class="btn-ghost" style="padding:5px 10px;font-size:0.8rem" title="Reset 3D camera angle">Reset View</button>
             <button type="button" id="btn-export-vivado" class="btn-secondary" style="padding:5px 11px;font-size:0.82rem" disabled title="Download Verilog + Basys 3 .xdc + Vivado .tcl (untested on hardware)">
               ⬇ Export Vivado (.zip — untested on hardware)
             </button>
@@ -314,8 +319,14 @@
           </div>
         </div>
 
-        <!-- 2D PCB Board -->
-        <div class="fpga-pcb" id="fpga-pcb">
+        <!-- 3D Virtual FPGA Board (Default) -->
+        <div class="board3d-wrap" id="board3d-wrap">
+          <div id="board3d-viewport" class="board3d-viewport"></div>
+          <div class="board3d-hint">Drag to rotate &bull; Scroll to zoom &bull; Click 3D switches &amp; pushbuttons</div>
+        </div>
+
+        <!-- 2D PCB Board (Optional Fallback) -->
+        <div class="fpga-pcb hidden" id="fpga-pcb">
           <!-- PCB Top Header -->
           <div class="pcb-top">
             <div class="pcb-label-block">
@@ -371,26 +382,26 @@
             </div>
           </div>
 
-          <!-- Clock Controls Strip -->
-          <div class="clock-strip">
-            <button type="button" id="btn-clk-toggle" class="btn-clk" disabled>▶ Run Clock</button>
-            <button type="button" id="btn-clk-step" class="btn-clk-sm" disabled>+1 CLK</button>
-            <label class="speed-control">
-              <span>Speed: <strong id="clk-hz-label">4 Hz</strong></span>
-              <input type="range" id="clk-hz-slider" min="1" max="15" value="4" />
-            </label>
-            <span class="cycle-counter">Cycles: <strong id="cycle-count">0</strong></span>
-          </div>
-
           <!-- 16 LEDs + 16 Switches -->
           <div class="io-bank">
             <div class="io-bank-header">
               <span>LEDs (led[15:0]) &amp; SLIDE SWITCHES (sw[15:0])</span>
-              <button type="button" id="btn-reset-sw" class="btn-link" disabled>Clear Switches</button>
             </div>
             <div class="led-row" id="led-row"></div>
             <div class="sw-row" id="sw-row"></div>
           </div>
+        </div>
+
+        <!-- Shared Clock & Switch Reset Controls (works for both 3D and 2D boards) -->
+        <div class="clock-strip" style="margin-top:12px;margin-bottom:0">
+          <button type="button" id="btn-clk-toggle" class="btn-clk" disabled>▶ Run Clock</button>
+          <button type="button" id="btn-clk-step" class="btn-clk-sm" disabled>+1 CLK</button>
+          <label class="speed-control">
+            <span>Speed: <strong id="clk-hz-label">4 Hz</strong></span>
+            <input type="range" id="clk-hz-slider" min="1" max="15" value="4" />
+          </label>
+          <button type="button" id="btn-reset-sw" class="btn-link" disabled>Clear Switches</button>
+          <span class="cycle-counter">Cycles: <strong id="cycle-count">0</strong></span>
         </div>
 
         <!-- Pin Mapping Legend -->

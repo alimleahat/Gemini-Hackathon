@@ -88,8 +88,11 @@ class AppHandler(BaseHTTPRequestHandler):
             return
         mime, _ = mimetypes.guess_type(str(target))
         content = target.read_bytes()
+        content_type = mime or "application/octet-stream"
+        if content_type.startswith("text/") or content_type in ("application/javascript", "application/json"):
+            content_type = f"{content_type}; charset=utf-8"
         self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", f"{mime or 'application/octet-stream'}; charset=utf-8")
+        self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(content)))
         self.send_header("Cache-Control", "no-cache")
         self.end_headers()

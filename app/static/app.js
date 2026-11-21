@@ -35,10 +35,15 @@ const state = {
   latestCircuitName: null,
 
   // Virtual FPGA Board state
+  boardView: "3d", // "3d" | "2d" (3D default)
+  board3dMod: null,
+  board3dInstance: null,
   boardSessionId: null,
   sw: 0,           // 16-bit integer
   btn: 0,          // 5-bit integer
   led: 0,          // 16-bit integer
+  seg: 0x7f,       // active-low 7-bit
+  an: 0x0f,        // active-low 4-bit
   digits: [0x7f, 0x7f, 0x7f, 0x7f], // active-low 7-bit per digit [d0..d3]
   clockRunning: false,
   clockHz: 4,
@@ -53,6 +58,7 @@ const $ = (id) => document.getElementById(id);
 // --- Initialization ---
 async function init() {
   buildVirtualBoardDOM();
+  init3DBoard();
   bindInputEvents();
   bindLiveCameraEvents();
   bindModulesEvents();
@@ -1188,8 +1194,84 @@ function renderPinMapping(items) {
   `;
 }
 
+// --- 3D Virtual FPGA Board Integration ---
+async function init3DBoard() {
+  const viewport = $("board3d-viewport");
+  if (!viewport) return;
+  try {
+    const mod = await import("/static/board3d/board3d.js");
+    state.board3dMod = mod;
+    state.board3dInstance = mod.init(viewport, {
+      onInput: handle3DBoardInput,
+      autoRotate: false,
+    });
+    sync3DBoard();
+  } catch (err) {
+    console.error("Failed to load 3D board, falling back to 2D:", err);
+    setBoardView("2d");
+  }
+}
+
+function handle3DBoardInput(name, value) {
+  const swMatch = /^sw(\d+)$/.exec(String(name));
+  if (swMatch) {
+    const bit = Number(swMatch[1]);
+    if (bit >= 0 && bit < 16) {
+      if (value) state.sw |= 1 << bit;
+      else state.sw &= ~(1 << bit);
+      syncSwitchDOM();
+      sendBoardStep(0);
+    }
+    return;
+  }
+
+  const btnMatch = /^btn(\d+)$/.exec(String(name));
+  if (btnMatch) {
+    const bit = Number(btnMatch[1]);
+    if (bit >= 0 && bit < 5) {
+      if (value) state.btn |= 1 << bit;
+      else state.btn &= ~(1 << bit);
+      const el = document.querySelector(`.fpga-btn[data-btn="${bit}"]`);
+      if (el) el.classList.toggle("pressed", Boolean(value));
+      sendBoardStep(0);
+    }
+  }
+}
+
+function sync3DBoard() {
+  if (!state.board3dMod) return;
+  state.board3dMod.update({
+    sw: state.sw,
+    btn: state.btn,
+    led: state.led,
+    seg: state.seg,
+    an: state.an,
+    digits: state.digits,
+  });
+}
+
+function setBoardView(mode) {
+  state.boardView = mode === "2d" ? "2d" : "3d";
+  const is3d = state.boardView === "3d";
+  $("board3d-wrap")?.classList.toggle("hidden", !is3d);
+  $("fpga-pcb")?.classList.toggle("hidden", is3d);
+  $("btn-reset-cam3d")?.classList.toggle("hidden", !is3d);
+  $("btn-view-3d")?.classList.toggle("active", is3d);
+  $("btn-view-2d")?.classList.toggle("active", !is3d);
+  if (is3d) {
+    if (!state.board3dMod) init3DBoard();
+    else sync3DBoard();
+  }
+}
+
 // --- Interactive Virtual FPGA Board Controls ---
 function bindBoardEvents() {
+  $("btn-view-3d")?.addEventListener("click", () => setBoardView("3d"));
+  $("btn-view-2d")?.addEventListener("click", () => setBoardView("2d"));
+  $("btn-reset-cam3d")?.addEventListener("click", () => {
+    state.board3dInstance?.resetCamera?.();
+  });
+
   // 5 Pushbuttons: press & release
   document.querySelectorAll(".fpga-btn").forEach((el) => {
     const bit = Number(el.dataset.btn);
@@ -1197,15 +1279,14 @@ function bindBoardEvents() {
       e.preventDefault();
       el.classList.add("pressed");
       state.btn |= 1 << bit;
-      // If clock is paused, advance 1 cycle on button press for synchronous resets/inputs?
-      // Better: evaluate immediately (0 cycles) so combinational & held-button work,
-      // and if clock is running it naturally clocks while held!
+      sync3DBoard();
       sendBoardStep(0);
     };
     const release = () => {
       if (!el.classList.contains("pressed")) return;
       el.classList.remove("pressed");
       state.btn &= ~(1 << bit);
+      sync3DBoard();
       sendBoardStep(0);
     };
     el.addEventListener("pointerdown", press);
@@ -1233,6 +1314,7 @@ function bindBoardEvents() {
   $("btn-reset-sw").addEventListener("click", () => {
     state.sw = 0;
     syncSwitchDOM();
+    sync3DBoard();
     sendBoardStep(0);
   });
 
@@ -1280,6 +1362,7 @@ async function exportVivadoZip() {
 function toggleSwitch(bit) {
   state.sw ^= 1 << bit;
   syncSwitchDOM();
+  sync3DBoard();
   sendBoardStep(0);
 }
 
@@ -1356,6 +1439,8 @@ async function sendBoardStep(cycles) {
 
 function applyBoardOutputs(data) {
   state.led = data.led || 0;
+  state.seg = typeof data.seg === "number" ? data.seg : 0x7f;
+  state.an = typeof data.an === "number" ? data.an : 0x0f;
   for (let i = 0; i < 16; i++) {
     const bulb = $(`led-${i}`);
     if (bulb) bulb.classList.toggle("on", Boolean(state.led & (1 << i)));
@@ -1373,6 +1458,8 @@ function applyBoardOutputs(data) {
       poly.classList.toggle("lit", isLit);
     });
   }
+
+  sync3DBoard();
 
   if (typeof data.cycles === "number") {
     $("cycle-count").textContent = String(data.cycles);
