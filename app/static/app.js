@@ -597,9 +597,11 @@ function setCardStatus(stage, status, label) {
 }
 
 function resetPipelineUI() {
-  ["gate", "generate", "test", "improve", "synthesis"].forEach((s) => {
-    $(`card-${s}`).classList.add("hidden");
-    $(`body-${s}`).innerHTML = "";
+  ["gate", "generate", "test", "improve", "lint", "synthesis"].forEach((s) => {
+    const c = $(`card-${s}`);
+    if (c) c.classList.add("hidden");
+    const b = $(`body-${s}`);
+    if (b) b.innerHTML = "";
     setStepper(s, "");
   });
   setStepper("input", "done");
@@ -715,6 +717,7 @@ function handleSSEEvent(eventName, payload) {
   else if (stage === "generate") renderGenerateStage(status, data);
   else if (stage === "test") renderTestStage(status, data);
   else if (stage === "improve") renderImproveStage(status, data);
+  else if (stage === "lint") renderLintStage(status, data);
   else if (stage === "synthesis") renderSynthesisStage(status, data);
   else if (stage === "board") renderBoardStage(status, data);
 }
@@ -864,6 +867,69 @@ function renderImproveStage(status, data) {
     if (data.final_testbench && $("code-tb")) {
       $("code-tb").textContent = data.final_testbench;
     }
+  }
+}
+
+function renderLintStage(status, data) {
+  if (status === "skipped") {
+    setCardStatus("lint", "skipped", "Skipped");
+    $("body-lint").innerHTML = `<p class="muted">${escapeHtml(data.reason)}</p>`;
+    return;
+  }
+  if (status === "running") {
+    setCardStatus("lint", "running", "Linting...");
+    $("body-lint").innerHTML = `<p class="muted">Checking for floating inputs, unconnected outputs, combinational loops, accidental latches, and width mismatches...</p>`;
+    return;
+  }
+
+  const issues = data.issues || [];
+  if (data.clean || !issues.length) {
+    setCardStatus("lint", "done", "Clean (0 Issues)");
+    $("body-lint").innerHTML = `
+      <div class="alert-box success">${escapeHtml(data.summary || "No design issues found.")}</div>
+      <p class="muted" style="margin-top:8px;font-size:0.82rem">Checked with: ${escapeHtml((data.tools_used || []).join(", "))}</p>
+    `;
+    return;
+  }
+
+  setCardStatus("lint", "error", `${issues.length} Issue${issues.length > 1 ? "s" : ""}`);
+  const body = $("body-lint");
+  body.innerHTML = `<p class="muted" style="margin-bottom:10px">${escapeHtml(data.summary || "")}</p>`;
+
+  // Highlight all flagged elements on the drawn schematic
+  const allIds = [];
+  const allLabels = [];
+  issues.forEach((iss) => {
+    (iss.schematic_element_ids || []).forEach((id) => allIds.push(id));
+    (iss.schematic_labels || []).forEach((lb) => allLabels.push(lb));
+    if (iss.signal_name) allLabels.push(iss.signal_name);
+
+    const card = document.createElement("div");
+    card.className = `issue-card ${iss.severity === "error" ? "error" : ""}`;
+    card.innerHTML = `
+      <div class="issue-head">
+        <strong>${escapeHtml(iss.title)}</strong>
+        <span class="issue-cat">${escapeHtml((iss.category || "issue").replace(/_/g, " "))}</span>
+      </div>
+      <p style="margin:0;font-size:0.92rem">${escapeHtml(iss.plain_explanation)}</p>
+      <div class="issue-fix">💡 Fix: ${escapeHtml(iss.how_to_fix)}</div>
+    `;
+    card.addEventListener("click", () => {
+      if (state.liveSchematic && window.SchematicRenderer) {
+        window.SchematicRenderer.render($("live-schematic-canvas"), state.liveSchematic, {
+          highlightedIds: iss.schematic_element_ids || [],
+          highlightedLabels: [...(iss.schematic_labels || []), iss.signal_name].filter(Boolean),
+        });
+      }
+    });
+    body.appendChild(card);
+  });
+
+  if (state.liveSchematic && window.SchematicRenderer) {
+    window.SchematicRenderer.render($("live-schematic-canvas"), state.liveSchematic, {
+      highlightedIds: allIds,
+      highlightedLabels: allLabels,
+    });
   }
 }
 

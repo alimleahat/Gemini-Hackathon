@@ -36,6 +36,7 @@ from app.pipeline.board_sim import board_manager
 from app.pipeline.gate import run_gate
 from app.pipeline.generator import run_generate
 from app.pipeline.improver import run_improve_loop
+from app.pipeline.linter import run_lint_check
 from app.pipeline.live_session import live_session_manager
 from app.pipeline.logger import (
     list_recent_runs,
@@ -325,6 +326,7 @@ class AppHandler(BaseHTTPRequestHandler):
             "initial_test": None,
             "improve_rounds": [],
             "final_test": None,
+            "lint": None,
             "synthesis": None,
             "board_loaded": False,
             "total_duration_ms": 0,
@@ -443,6 +445,22 @@ class AppHandler(BaseHTTPRequestHandler):
                 )
 
             run_record["final_test"] = final_test
+
+            # --- DESIGN ISSUE FLAGS (Yosys/Verilator lint + gemini-4-neon) ---
+            if final_test.get("board_interface_ok"):
+                self._send_sse("stage", {"stage": "lint", "status": "running"})
+                lint_res = run_lint_check(final_verilog, schematic_json=schematic_json)
+                run_record["lint"] = lint_res
+                self._send_sse("stage", {"stage": "lint", "status": "done", "data": lint_res})
+            else:
+                self._send_sse(
+                    "stage",
+                    {
+                        "stage": "lint",
+                        "status": "skipped",
+                        "data": {"reason": "Skipped because Verilog did not compile cleanly."},
+                    },
+                )
 
             # --- STEP 6: SYNTHESIS REPORT (Yosys synth_xilinx, swappable) ---
             if not enable_synthesis:

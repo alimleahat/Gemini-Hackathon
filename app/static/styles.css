@@ -1442,4 +1442,51 @@ body {
   font-size: 0.76rem;
 }
 
+/* ================= DESIGN ISSUE FLAGS ================= */
+.issue-card {
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.issue-card.error {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.issue-card:hover {
+  border-color: var(--accent);
+}
+
+.issue-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.issue-cat {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.issue-fix {
+  margin-top: 6px;
+  font-size: 0.86rem;
+  color: #bae6fd;
+}
+
+
 
