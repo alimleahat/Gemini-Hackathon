@@ -1,25 +1,25 @@
 {
   "metadata": {
-    "timestamp_utc": "2026-11-21T19:47:53.802115+00:00",
+    "timestamp_utc": "2026-11-21T20:06:32.824421+00:00",
     "baseline_name": "Neon with retries, no tools",
     "model": "gemini-4-neon",
     "initial_rounds": 1,
     "review_rounds": 3,
     "total_rounds_per_problem": 4,
-    "completed_problems": 15,
+    "completed_problems": 20,
     "total_problems": 20,
-    "total_wall_seconds": 982.31
+    "total_wall_seconds": 2101.33
   },
   "summary": {
-    "passed": 14,
-    "total": 15,
-    "pass_rate_pct": 93.3,
-    "avg_luts": 58.8,
-    "avg_ffs": 57.5,
-    "synthesized_count": 14,
-    "avg_time_seconds": 391.05,
+    "passed": 15,
+    "total": 20,
+    "pass_rate_pct": 75.0,
+    "avg_luts": 60.2,
+    "avg_ffs": 56.3,
+    "synthesized_count": 15,
+    "avg_time_seconds": 526.63,
     "compile_errors": 0,
-    "test_failures": 1,
+    "test_failures": 5,
     "timeouts": 0,
     "api_errors": 0
   },
@@ -308,6 +308,23 @@
       }
     },
     {
+      "problem": "cvdp_copilot_microcode_sequencer_0001",
+      "domain": "fsm",
+      "difficulty": "medium",
+      "status": "fail",
+      "failure_type": "test_failure",
+      "total_time_seconds": 1969.163,
+      "round_times_seconds": [
+        509.081,
+        507.42,
+        473.64,
+        479.022
+      ],
+      "api_warning": null,
+      "error_message": "FAILED\n=================================== FAILURES ===================================\n        CalledProcessError. The CalledProcessError object will have the return code\n>               raise CalledProcessError(retcode, process.args,\nE               subprocess.CalledProcessError: Command '['iverilog', '-o', '/private/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/tmpenostyla/sim_build/sim.vvp', '-s', 'microcode_sequencer', '-g2012', '-s', 'cocotb_iverilog_dump', '-f', '/private/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/tmpenostyla/sim_build/cmds.f', '/private/var/folders/8g/1jp_wwls0g",
+      "yosys": null
+    },
+    {
       "problem": "cvdp_copilot_sorter_0001",
       "domain": "memory",
       "difficulty": "easy",
@@ -511,6 +528,93 @@
           "LUT5": 2,
           "LUT6": 64,
           "OBUF": 66
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_apb_gpio_0001",
+      "domain": "protocol",
+      "difficulty": "medium",
+      "status": "fail",
+      "failure_type": "test_failure",
+      "total_time_seconds": 680.927,
+      "round_times_seconds": [
+        247.933,
+        142.251,
+        141.582,
+        149.161
+      ],
+      "api_warning": null,
+      "error_message": "860.00ns ERROR    root                               FAIL: Interrupt State Register mismatch (Level-Triggered). Expected: 0x55, Got: 0xAA\n   860.00ns ERROR    cocotb.cvdp_copilot_apb_gpio       Test 4 completed with failures:\n                                                        FAIL: Interrupt State Register mismatch (Level-Triggered). Expected: 0x55, Got: 0xAA\n                                                          FAIL: Interrupt State Register mismatch (Level-Triggered). Expected: 0x55, Got: 0xAA\n                                                        AssertionError: Some test cases",
+      "yosys": null
+    },
+    {
+      "problem": "cvdp_copilot_axi_register_0001",
+      "domain": "protocol",
+      "difficulty": "medium",
+      "status": "fail",
+      "failure_type": "test_failure",
+      "total_time_seconds": 707.304,
+      "round_times_seconds": [
+        218.108,
+        132.664,
+        194.064,
+        162.468
+      ],
+      "api_warning": null,
+      "error_message": "1140.00ns ERROR    cocotb.axi_register                CTRL_ID test failed: expected=0x1, got=0x0\n                                                        AssertionError: CTRL_ID test failed: expected=0x1, got=0x0\n                                                        ** test_axi_register.test_axi_register   FAIL        1140.00           0.00     253835.88  **\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                      1140.00           0.01     161161.70  **\nFAILED\n  1140.00ns ERROR    cocotb.axi_register                CTRL_ID test failed: ex",
+      "yosys": null
+    },
+    {
+      "problem": "cvdp_copilot_wb2ahb_0001",
+      "domain": "protocol",
+      "difficulty": "medium",
+      "status": "fail",
+      "failure_type": "test_failure",
+      "total_time_seconds": 835.787,
+      "round_times_seconds": [
+        328.632,
+        162.136,
+        177.128,
+        167.891
+      ],
+      "api_warning": null,
+      "error_message": "50.00ns WARNING  ..idge.test_wishbone_to_ahb_bridge ERROR: hwrite should be 1, got 0\n                                                            assert dut.hwrite.value == 1, f\"ERROR: hwrite should be 1, got {dut.hwrite.value}\"\n                                                        AssertionError: ERROR: hwrite should be 1, got 0\n                                                        ** test_wishbone_to_ahb_bridge.test_wishbone_to_ahb_bridge   FAIL          50.00           0.00      43554.56  **\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0",
+      "yosys": null
+    },
+    {
+      "problem": "cvdp_copilot_vga_controller_0001",
+      "domain": "protocol",
+      "difficulty": "medium",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 473.716,
+      "round_times_seconds": [
+        151.062,
+        99.163,
+        102.373,
+        121.118
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 80,
+        "ffs": 39,
+        "cells_by_type": {
+          "BUFG": 1,
+          "CARRY4": 6,
+          "FDCE": 35,
+          "FDPE": 4,
+          "IBUF": 10,
+          "INV": 4,
+          "LUT2": 37,
+          "LUT3": 12,
+          "LUT4": 5,
+          "LUT5": 14,
+          "LUT6": 12,
+          "OBUF": 49
         },
         "synth_error": null
       }
