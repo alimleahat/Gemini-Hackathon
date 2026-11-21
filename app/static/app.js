@@ -391,6 +391,7 @@ async function startLiveMirror() {
     }
 
     state.liveMirroring = true;
+    setVisionOverlayVisible(true);
     $("btn-live-toggle").textContent = "⏸ Pause Mirror";
     $("btn-live-done").disabled = false;
     $("live-status-text").textContent = "Live mirroring active — grabbing a frame every 1.5s...";
@@ -549,6 +550,7 @@ async function finishLiveAndBuild() {
     }).catch(() => {});
   }
   stopLiveVideoStream();
+  setVisionOverlayVisible(false);
   $("live-video-placeholder").classList.remove("hidden");
   $("btn-live-toggle").textContent = "▶ Start Live Mirror";
   state.liveSessionId = null;
@@ -677,17 +679,20 @@ function bindToggleEvents() {
 // --- Studio Layout, Top Pop-Ups, Hero Metrics & Timeline Helpers (Visual Only) ---
 const activeToasts = new Map();
 
+function setVisionOverlayVisible(visible) {
+  document.body.classList.toggle("layout-board", !visible);
+  document.body.classList.toggle("layout-vision", visible);
+  $("btn-toggle-vision")?.classList.toggle("active", visible);
+}
+
 function bindStudioLayoutEvents() {
-  // Stage layout switcher (3-Hero / Board Only / Vision Focus)
-  document.querySelectorAll("[data-stage-layout]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const mode = btn.dataset.stageLayout;
-      document.body.classList.remove("layout-split", "layout-board", "layout-vision");
-      document.body.classList.add(`layout-${mode}`);
-      document.querySelectorAll("[data-stage-layout]").forEach((b) =>
-        b.classList.toggle("active", b === btn)
-      );
-    });
+  // On-demand Vision overlay toggle (keeps 3D board completely unobstructed by default)
+  $("btn-toggle-vision")?.addEventListener("click", () => {
+    const isOpen = document.body.classList.contains("layout-vision");
+    setVisionOverlayVisible(!isOpen);
+  });
+  $("btn-close-vision")?.addEventListener("click", () => {
+    setVisionOverlayVisible(false);
   });
 
   // Floating sidebar collapse / expand
