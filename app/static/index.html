@@ -293,7 +293,12 @@
             <span class="badge-step">STEP 7</span>
             <h2 id="board-title">Virtual FPGA Board</h2>
           </div>
-          <span class="status-badge idle" id="status-board">Ready</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <button type="button" id="btn-export-vivado" class="btn-secondary" style="padding:5px 11px;font-size:0.82rem" disabled title="Download Verilog + Basys 3 .xdc + Vivado .tcl (untested on hardware)">
+              ⬇ Export Vivado (.zip — untested on hardware)
+            </button>
+            <span class="status-badge idle" id="status-board">Ready</span>
+          </div>
         </div>
 
         <!-- 2D PCB Board -->

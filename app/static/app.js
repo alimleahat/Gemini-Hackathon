@@ -27,6 +27,11 @@ const state = {
   // Saved Module Library (used by live frames + generation)
   savedModules: [],
 
+  // Latest generated design (for Vivado export)
+  latestVerilog: null,
+  latestTestbench: null,
+  latestCircuitName: null,
+
   // Virtual FPGA Board state
   boardSessionId: null,
   sw: 0,           // 16-bit integer
@@ -781,6 +786,10 @@ function renderGenerateStage(status, data) {
   }
 
   setCardStatus("generate", "done", `Done (${(data.duration_ms / 1000).toFixed(1)}s)`);
+  state.latestVerilog = data.verilog_code;
+  state.latestTestbench = data.testbench_code;
+  state.latestCircuitName = data.circuit_name;
+  $("btn-export-vivado").disabled = false;
   $("body-generate").innerHTML = `
     <h3 style="margin:0 0 6px;font-size:1.15rem">${escapeHtml(data.circuit_name)}</h3>
     <p class="muted" style="margin-bottom:10px">${escapeHtml(data.design_summary)}</p>
@@ -861,11 +870,13 @@ function renderImproveStage(status, data) {
     if (working) working.remove();
     const ok = !!data.passed;
     setCardStatus("improve", ok ? "done" : "error", ok ? `Fixed (${data.rounds_used}r)` : `Failed (${data.rounds_used}r)`);
-    if (data.final_verilog && $("code-verilog")) {
-      $("code-verilog").textContent = data.final_verilog;
+    if (data.final_verilog) {
+      state.latestVerilog = data.final_verilog;
+      if ($("code-verilog")) $("code-verilog").textContent = data.final_verilog;
     }
-    if (data.final_testbench && $("code-tb")) {
-      $("code-tb").textContent = data.final_testbench;
+    if (data.final_testbench) {
+      state.latestTestbench = data.final_testbench;
+      if ($("code-tb")) $("code-tb").textContent = data.final_testbench;
     }
   }
 }
@@ -1101,6 +1112,46 @@ function bindBoardEvents() {
     syncSwitchDOM();
     sendBoardStep(0);
   });
+
+  $("btn-export-vivado").addEventListener("click", exportVivadoZip);
+}
+
+async function exportVivadoZip() {
+  if (!state.latestVerilog) {
+    alert("Build a circuit first to export a Vivado project.");
+    return;
+  }
+  const btn = $("btn-export-vivado");
+  btn.disabled = true;
+  try {
+    const res = await fetch("/api/export/vivado", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        verilog_code: state.latestVerilog,
+        testbench_code: state.latestTestbench,
+        circuit_name: state.latestCircuitName || "fpga_design",
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || "Export failed");
+    }
+    const blob = await res.blob();
+    const disp = res.headers.get("Content-Disposition") || "";
+    const match = disp.match(/filename="([^"]+)"/);
+    const filename = match ? match[1] : "vivado_project_untested.zip";
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert("Vivado export error: " + err.message);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function toggleSwitch(bit) {

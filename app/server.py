@@ -47,6 +47,7 @@ from app.pipeline.logger import (
 from app.pipeline.modules import module_library
 from app.pipeline.synthesizer import run_synthesis
 from app.pipeline.tester import run_test
+from app.pipeline.vivado_export import build_vivado_zip
 
 
 class AppHandler(BaseHTTPRequestHandler):
@@ -157,6 +158,9 @@ class AppHandler(BaseHTTPRequestHandler):
         if path == "/api/modules/import":
             self._handle_module_import()
             return
+        if path == "/api/export/vivado":
+            self._handle_vivado_export()
+            return
 
         self.send_error(HTTPStatus.NOT_FOUND, "Not found")
 
@@ -251,6 +255,27 @@ class AppHandler(BaseHTTPRequestHandler):
             self._send_json({"modules": modules})
         except Exception as e:
             self._send_json({"error": str(e)}, status=400)
+
+    def _handle_vivado_export(self) -> None:
+        try:
+            body = self._read_json_body()
+            verilog_code = body.get("verilog_code") or ""
+            if not verilog_code.strip():
+                self._send_json({"error": "No Verilog code available to export."}, status=400)
+                return
+            filename, zip_bytes = build_vivado_zip(
+                verilog_code=verilog_code,
+                testbench_code=body.get("testbench_code") or None,
+                circuit_name=str(body.get("circuit_name") or "fpga_design"),
+            )
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/zip")
+            self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+            self.send_header("Content-Length", str(len(zip_bytes)))
+            self.end_headers()
+            self.wfile.write(zip_bytes)
+        except Exception as e:
+            self._send_json({"error": str(e)}, status=500)
 
     def _handle_board_step(self) -> None:
         try:
