@@ -1,0 +1,11 @@
+{
+  "_instructions": "Tag each live session folder from app/runs/ (e.g. 'live_20261121_153000_abc123') with one of: half_adder, full_adder, adder_4bit, adder_4bit_7seg, counter_4bit. Run `python eval_drawings/score_drawings.py --scan` to auto-add new live sessions from app/runs/.",
+  "valid_circuits": [
+    "half_adder",
+    "full_adder",
+    "adder_4bit",
+    "adder_4bit_7seg",
+    "counter_4bit"
+  ],
+  "sessions": {}
+}
