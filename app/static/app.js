@@ -48,6 +48,7 @@ async function init() {
   buildVirtualBoardDOM();
   bindInputEvents();
   bindLiveCameraEvents();
+  bindModulesEvents();
   bindToggleEvents();
   bindBoardEvents();
   bindHistoryModal();
@@ -58,6 +59,7 @@ async function init() {
   }
   syncRunBarVisibility();
   populateCameraList(false);
+  fetchSavedModules();
 
   // Fetch active model IDs & live interval from single config file on backend
   try {
@@ -1135,6 +1137,244 @@ function applyBoardOutputs(data) {
   if (typeof data.cycles === "number") {
     $("cycle-count").textContent = String(data.cycles);
   }
+}
+
+// --- Module Library Side Panel & Hierarchy ---
+function bindModulesEvents() {
+  $("btn-modules-drawer").addEventListener("click", () => {
+    $("modules-drawer").classList.toggle("hidden");
+    renderModulesDrawer();
+  });
+  $("btn-close-modules").addEventListener("click", () => {
+    $("modules-drawer").classList.add("hidden");
+  });
+  $("btn-save-mod").addEventListener("click", () => {
+    const name = $("input-mod-name").value.trim();
+    saveCurrentAsModule(name);
+  });
+  $("btn-export-lib").addEventListener("click", exportModuleLibrary);
+  $("btn-import-lib").addEventListener("click", () => $("import-lib-file").click());
+  $("import-lib-file").addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (file) importModuleLibraryFile(file);
+    e.target.value = "";
+  });
+}
+
+async function fetchSavedModules() {
+  try {
+    const res = await fetch("/api/modules");
+    if (!res.ok) return;
+    const data = await res.json();
+    state.savedModules = data.modules || [];
+    $("modules-count").textContent = String(state.savedModules.length);
+    renderModulesDrawer();
+  } catch (_) {}
+}
+
+function onLiveSchematicUpdated(schematic) {
+  const bar = $("live-detected-box-bar");
+  if (!bar) return;
+  const defBox = (schematic?.boxes || []).find((b) => b.is_definition && b.name);
+  if (!defBox) {
+    bar.classList.add("hidden");
+    return;
+  }
+  bar.classList.remove("hidden");
+  bar.innerHTML = `
+    <span>Detected module box <strong>${escapeHtml(defBox.name)}</strong> with gates inside.</span>
+    <button type="button" class="btn-primary" style="padding:6px 14px;font-size:0.86rem" id="btn-quick-save-box">
+      Save "${escapeHtml(defBox.name)}" to Library
+    </button>
+  `;
+  $("btn-quick-save-box").addEventListener("click", () => {
+    $("modules-drawer").classList.remove("hidden");
+    $("input-mod-name").value = defBox.name;
+    saveCurrentAsModule(defBox.name);
+  });
+}
+
+async function saveCurrentAsModule(name) {
+  if (!name) {
+    alert("Please enter a module name (e.g. HALF_ADDER).");
+    return;
+  }
+  const payload = { name };
+
+  if (state.inputMode === "live") {
+    const fresh = captureCurrentLiveFrameB64();
+    const b64 = fresh?.b64 || state.liveLastImageB64;
+    if (!b64 && !state.liveSchematic) {
+      alert("Show your drawn module on the live camera first.");
+      return;
+    }
+    if (b64) {
+      payload.image_b64 = b64;
+      payload.mime_type = "image/jpeg";
+    }
+    if (state.liveSchematic) payload.schematic_json = state.liveSchematic;
+    const note = $("live-note").value.trim();
+    if (note) payload.text_prompt = note;
+  } else if (state.inputMode === "photo") {
+    if (!state.imageB64) {
+      alert("Upload or capture a photo first.");
+      return;
+    }
+    payload.image_b64 = state.imageB64;
+    payload.mime_type = state.mimeType;
+    const note = $("photo-note").value.trim();
+    if (note) payload.text_prompt = note;
+  } else {
+    const desc = $("text-prompt").value.trim();
+    if (!desc) {
+      alert("Type a circuit description first.");
+      return;
+    }
+    payload.text_prompt = desc;
+  }
+
+  $("btn-save-mod").disabled = true;
+  $("mod-save-status").textContent = `Generating & testing standalone Verilog module "${name}"...`;
+
+  try {
+    const res = await fetch("/api/modules/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to save module");
+
+    state.savedModules = data.modules || [];
+    $("modules-count").textContent = String(state.savedModules.length);
+    $("input-mod-name").value = "";
+    const mod = data.module;
+    $("mod-save-status").textContent = mod.test_passed
+      ? `Saved "${mod.name}" (${mod.verilog_module_name}) — standalone test PASSED!`
+      : `Saved "${mod.name}" — warning: standalone test failed.`;
+    renderModulesDrawer();
+  } catch (err) {
+    $("mod-save-status").textContent = `Error: ${err.message}`;
+  } finally {
+    $("btn-save-mod").disabled = false;
+  }
+}
+
+function renderModulesDrawer() {
+  const list = $("modules-list");
+  if (!list) return;
+  if (!state.savedModules.length) {
+    list.innerHTML = `<p class="muted">No saved modules yet. Draw a circuit inside a box with a corner name (or type one above) to save a reusable Verilog module.</p>`;
+    return;
+  }
+
+  list.innerHTML = "";
+  state.savedModules.forEach((mod, idx) => {
+    const card = document.createElement("div");
+    card.className = "mod-card";
+
+    const inChips = (mod.inputs || [])
+      .map((p) => `<span class="pin-chip">IN ${escapeHtml(p.name)}${p.width > 1 ? `[${p.width - 1}:0]` : ""}</span>`)
+      .join("");
+    const outChips = (mod.outputs || [])
+      .map((p) => `<span class="pin-chip" style="color:#4ade80">OUT ${escapeHtml(p.name)}${p.width > 1 ? `[${p.width - 1}:0]` : ""}</span>`)
+      .join("");
+
+    card.innerHTML = `
+      <div class="mod-card-head">
+        <div>
+          <strong>${escapeHtml(mod.name)}</strong>
+          <span class="model-tag">${escapeHtml(mod.verilog_module_name)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="status-badge ${mod.test_passed ? "done" : "error"}">${mod.test_passed ? "PASS" : "FAIL"}</span>
+          <button type="button" class="btn-ghost" style="padding:3px 8px;font-size:0.78rem" data-del-mod="${escapeHtml(mod.name)}">✕</button>
+        </div>
+      </div>
+      <div class="mod-mini-schematic" id="mod-thumb-${idx}"></div>
+      <div class="mod-ports">${inChips}${outChips}</div>
+      <p class="muted" style="font-size:0.82rem">${escapeHtml(mod.description || "")}</p>
+      <details class="code-details">
+        <summary>Module Verilog</summary>
+        <pre>${escapeHtml(mod.verilog_code || "")}</pre>
+      </details>
+    `;
+
+    list.appendChild(card);
+
+    // Render mini SVG schematic thumbnail
+    const thumb = card.querySelector(`#mod-thumb-${idx}`);
+    if (thumb && window.SchematicRenderer) {
+      const miniSchematic = mod.schematic_json || buildFallbackModuleSchematic(mod);
+      window.SchematicRenderer.render(thumb, miniSchematic, { compact: true });
+    }
+
+    card.querySelector("[data-del-mod]").addEventListener("click", async () => {
+      const res = await fetch("/api/modules/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: mod.name }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        state.savedModules = data.modules || [];
+        $("modules-count").textContent = String(state.savedModules.length);
+        renderModulesDrawer();
+      }
+    });
+  });
+}
+
+function buildFallbackModuleSchematic(mod) {
+  const elements = [
+    { id: "m", type: "module_instance", label: mod.name, module_name: mod.name, x: 50, y: 50, confidence: 1, uncertain: false },
+  ];
+  const wires = [];
+  (mod.inputs || []).forEach((p, i, arr) => {
+    const y = ((i + 1) / (arr.length + 1)) * 84 + 8;
+    elements.push({ id: `in_${i}`, type: "input", label: p.name, x: 14, y, confidence: 1, uncertain: false });
+    wires.push({ from_id: `in_${i}`, to_id: "m" });
+  });
+  (mod.outputs || []).forEach((p, i, arr) => {
+    const y = ((i + 1) / (arr.length + 1)) * 84 + 8;
+    elements.push({ id: `out_${i}`, type: "output", label: p.name, x: 86, y, confidence: 1, uncertain: false });
+    wires.push({ from_id: "m", to_id: `out_${i}` });
+  });
+  return { circuit_title: mod.name, elements, boxes: [], wires, notes: "" };
+}
+
+function exportModuleLibrary() {
+  const payload = { version: 1, modules: state.savedModules };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "fpga_module_library.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importModuleLibraryFile(file) {
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const parsed = JSON.parse(String(reader.result || "{}"));
+      const res = await fetch("/api/modules/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ library: parsed, replace: false }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Import failed");
+      state.savedModules = data.modules || [];
+      $("modules-count").textContent = String(state.savedModules.length);
+      $("mod-save-status").textContent = `Loaded ${state.savedModules.length} module(s) from ${file.name}.`;
+      renderModulesDrawer();
+    } catch (err) {
+      alert("Could not load library file: " + err.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
 // --- Saved Runs Modal ---

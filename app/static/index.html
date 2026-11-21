@@ -36,6 +36,7 @@
         <span class="pill-label">Synthesis Report</span>
       </label>
 
+      <button id="btn-modules-drawer" class="btn-ghost" type="button">Modules (<span id="modules-count">0</span>)</button>
       <button id="btn-history" class="btn-ghost" type="button">Saved Runs</button>
     </div>
   </header>
@@ -369,6 +370,31 @@
       </div>
     </section>
   </main>
+
+  <!-- Module Library Side Panel -->
+  <aside id="modules-drawer" class="side-drawer hidden" aria-label="Module Library">
+    <div class="drawer-header">
+      <div>
+        <h2>Module Library</h2>
+        <p class="subtitle">Draw a box with a name in a corner to save, or inside a box to instantiate.</p>
+      </div>
+      <button type="button" id="btn-close-modules" class="btn-ghost">✕</button>
+    </div>
+
+    <div class="drawer-actions">
+      <button type="button" id="btn-export-lib" class="btn-secondary">Save Library (.json)</button>
+      <button type="button" id="btn-import-lib" class="btn-secondary">Load Library (.json)</button>
+      <input type="file" id="import-lib-file" accept=".json,application/json" hidden />
+    </div>
+
+    <div class="save-mod-form">
+      <input type="text" id="input-mod-name" class="text-input-sm" style="margin-top:0" placeholder="Module name (e.g. HALF_ADDER)" />
+      <button type="button" id="btn-save-mod" class="btn-primary">Save Current as Module</button>
+    </div>
+    <p id="mod-save-status" class="muted" style="font-size:0.84rem;min-height:1.2em"></p>
+
+    <div id="modules-list" class="modules-list"></div>
+  </aside>
 
   <!-- Saved Runs Modal -->
   <div id="history-modal" class="modal hidden" role="dialog" aria-modal="true">

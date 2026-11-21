@@ -1346,3 +1346,100 @@ body {
   font-size: 0.88rem;
 }
 
+/* ================= MODULE LIBRARY SIDE PANEL ================= */
+.side-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  max-width: 94vw;
+  height: 100vh;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -14px 0 36px rgba(0, 0, 0, 0.55);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  gap: 12px;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.drawer-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.drawer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.drawer-actions button {
+  flex: 1;
+}
+
+.save-mod-form {
+  display: flex;
+  gap: 8px;
+}
+
+.save-mod-form input {
+  flex: 1;
+}
+
+.save-mod-form button {
+  white-space: nowrap;
+  padding: 9px 14px;
+  font-size: 0.88rem;
+}
+
+.modules-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 2px;
+}
+
+.mod-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mod-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.mod-mini-schematic {
+  width: 100%;
+  height: 125px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.mod-ports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+}
+
+

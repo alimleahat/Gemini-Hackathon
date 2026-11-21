@@ -43,6 +43,7 @@ from app.pipeline.logger import (
     save_input_image,
     save_run_log,
 )
+from app.pipeline.modules import module_library
 from app.pipeline.synthesizer import run_synthesis
 from app.pipeline.tester import run_test
 
@@ -115,6 +116,9 @@ class AppHandler(BaseHTTPRequestHandler):
         if path == "/api/runs":
             self._send_json({"runs": list_recent_runs(20)})
             return
+        if path == "/api/modules":
+            self._send_json({"modules": module_library.list_modules()})
+            return
         if path == "/api/health":
             self._send_json({"ok": True})
             return
@@ -143,6 +147,15 @@ class AppHandler(BaseHTTPRequestHandler):
         if path == "/api/live/finish":
             self._handle_live_finish()
             return
+        if path == "/api/modules/save":
+            self._handle_module_save()
+            return
+        if path == "/api/modules/delete":
+            self._handle_module_delete()
+            return
+        if path == "/api/modules/import":
+            self._handle_module_import()
+            return
 
         self.send_error(HTTPStatus.NOT_FOUND, "Not found")
 
@@ -161,7 +174,8 @@ class AppHandler(BaseHTTPRequestHandler):
             session_id = str(body.get("session_id", ""))
             image_b64 = body.get("image_b64")
             mime_type = body.get("mime_type") or "image/jpeg"
-            saved_modules = body.get("saved_modules") or None
+            # App is the source of truth for the module library
+            saved_modules = module_library.list_modules()
             if not session_id or not image_b64:
                 self._send_json({"error": "session_id and image_b64 are required"}, status=400)
                 return
@@ -200,6 +214,43 @@ class AppHandler(BaseHTTPRequestHandler):
         except Exception as e:
             self._send_json({"error": str(e)}, status=500)
 
+    def _handle_module_save(self) -> None:
+        try:
+            body = self._read_json_body()
+            name = str(body.get("name", "")).strip()
+            if not name:
+                self._send_json({"error": "Module name is required"}, status=400)
+                return
+            entry = module_library.create_and_save_module(
+                name=name,
+                image_b64=body.get("image_b64") or None,
+                mime_type=body.get("mime_type") or "image/jpeg",
+                schematic_json=body.get("schematic_json") or None,
+                text_prompt=body.get("text_prompt") or None,
+            )
+            self._send_json({"module": entry, "modules": module_library.list_modules()})
+        except Exception as e:
+            traceback.print_exc()
+            self._send_json({"error": str(e)}, status=500)
+
+    def _handle_module_delete(self) -> None:
+        try:
+            body = self._read_json_body()
+            name = str(body.get("name", ""))
+            module_library.delete_module(name)
+            self._send_json({"modules": module_library.list_modules()})
+        except Exception as e:
+            self._send_json({"error": str(e)}, status=500)
+
+    def _handle_module_import(self) -> None:
+        try:
+            body = self._read_json_body()
+            replace = bool(body.get("replace", False))
+            modules = module_library.import_library(body.get("library", body), replace=replace)
+            self._send_json({"modules": modules})
+        except Exception as e:
+            self._send_json({"error": str(e)}, status=400)
+
     def _handle_board_step(self) -> None:
         try:
             body = self._read_json_body()
@@ -226,7 +277,7 @@ class AppHandler(BaseHTTPRequestHandler):
         text_prompt = (body.get("text_prompt") or "").strip() or None
         schematic_json = body.get("schematic_json") or None
         live_session_id = body.get("live_session_id") or None
-        saved_modules = body.get("saved_modules") or None
+        saved_modules = module_library.list_modules() or None
         baseline_mode = bool(body.get("baseline_mode", False))
         enable_improve = bool(body.get("enable_improve", True)) and not baseline_mode
         enable_synthesis = bool(body.get("enable_synthesis", True))
