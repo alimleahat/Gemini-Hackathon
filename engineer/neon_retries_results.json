@@ -1,0 +1,519 @@
+{
+  "metadata": {
+    "timestamp_utc": "2026-11-21T19:47:53.802115+00:00",
+    "baseline_name": "Neon with retries, no tools",
+    "model": "gemini-4-neon",
+    "initial_rounds": 1,
+    "review_rounds": 3,
+    "total_rounds_per_problem": 4,
+    "completed_problems": 15,
+    "total_problems": 20,
+    "total_wall_seconds": 982.31
+  },
+  "summary": {
+    "passed": 14,
+    "total": 15,
+    "pass_rate_pct": 93.3,
+    "avg_luts": 58.8,
+    "avg_ffs": 57.5,
+    "synthesized_count": 14,
+    "avg_time_seconds": 391.05,
+    "compile_errors": 0,
+    "test_failures": 1,
+    "timeouts": 0,
+    "api_errors": 0
+  },
+  "results": [
+    {
+      "problem": "cvdp_copilot_complex_multiplier_0001",
+      "domain": "arithmetic",
+      "difficulty": "easy",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 129.451,
+      "round_times_seconds": [
+        30.885,
+        21.891,
+        33.401,
+        43.274
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 33,
+        "ffs": 64,
+        "cells_by_type": {
+          "BUFG": 1,
+          "CARRY4": 8,
+          "DSP48E1": 4,
+          "FDCE": 64,
+          "IBUF": 66,
+          "INV": 1,
+          "LUT2": 33,
+          "OBUF": 64
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_matrix_multiplier_0001",
+      "domain": "arithmetic",
+      "difficulty": "easy",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 467.518,
+      "round_times_seconds": [
+        98.269,
+        146.784,
+        107.28,
+        115.185
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0,
+        "cells_by_type": {
+          "DSP48E1": 64,
+          "IBUF": 256,
+          "OBUF": 288
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_restoring_division_0001",
+      "domain": "arithmetic",
+      "difficulty": "medium",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 976.829,
+      "round_times_seconds": [
+        336.447,
+        180.695,
+        212.806,
+        246.881
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 32,
+        "ffs": 41,
+        "cells_by_type": {
+          "BUFG": 1,
+          "CARRY4": 3,
+          "FDCE": 41,
+          "IBUF": 15,
+          "INV": 3,
+          "LUT2": 9,
+          "LUT3": 1,
+          "LUT4": 8,
+          "LUT5": 9,
+          "LUT6": 5,
+          "OBUF": 13
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_16qam_mapper_0001",
+      "domain": "arithmetic",
+      "difficulty": "medium",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 339.994,
+      "round_times_seconds": [
+        86.807,
+        92.04,
+        80.365,
+        80.782
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 12,
+        "ffs": 0,
+        "cells_by_type": {
+          "CARRY4": 4,
+          "IBUF": 16,
+          "INV": 8,
+          "LUT2": 12,
+          "OBUF": 36
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_hill_cipher_0001",
+      "domain": "arithmetic",
+      "difficulty": "medium",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 396.543,
+      "round_times_seconds": [
+        109.687,
+        81.19,
+        119.003,
+        86.663
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 202,
+        "ffs": 145,
+        "cells_by_type": {
+          "BUFG": 1,
+          "CARRY4": 51,
+          "DSP48E1": 9,
+          "FDCE": 144,
+          "FDPE": 1,
+          "IBUF": 63,
+          "INV": 3,
+          "LUT2": 40,
+          "LUT3": 106,
+          "LUT4": 46,
+          "LUT5": 6,
+          "LUT6": 4,
+          "OBUF": 16
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_bcd_counter_0001",
+      "domain": "fsm",
+      "difficulty": "easy",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 95.566,
+      "round_times_seconds": [
+        23.554,
+        24.105,
+        27.841,
+        20.066
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 26,
+        "ffs": 24,
+        "cells_by_type": {
+          "BUFG": 1,
+          "CARRY4": 6,
+          "FDCE": 24,
+          "IBUF": 2,
+          "INV": 6,
+          "LUT2": 10,
+          "LUT3": 4,
+          "LUT4": 3,
+          "LUT5": 3,
+          "LUT6": 6,
+          "OBUF": 24
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_vending_machine_0001",
+      "domain": "fsm",
+      "difficulty": "medium",
+      "status": "fail",
+      "failure_type": "test_failure",
+      "total_time_seconds": 697.796,
+      "round_times_seconds": [
+        197.897,
+        158.049,
+        164.515,
+        177.335
+      ],
+      "api_warning": null,
+      "error_message": "AssertionError: Expected item to be dispensed!\n                                                        ** test_vending_machine.test_vending_machine   FAIL         130.00           0.00      86370.90  **\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                             130.00           0.00      34219.88  **\nFAILED\n                                                        AssertionError: Expected item to be dispensed!\n                                                        ** test_vending_mac",
+      "yosys": null
+    },
+    {
+      "problem": "cvdp_copilot_thermostat_0001",
+      "domain": "fsm",
+      "difficulty": "medium",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 427.13,
+      "round_times_seconds": [
+        134.83,
+        94.239,
+        91.409,
+        106.652
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 19,
+        "ffs": 11,
+        "cells_by_type": {
+          "BUFG": 1,
+          "FDCE": 9,
+          "FDPE": 2,
+          "IBUF": 12,
+          "INV": 1,
+          "LUT2": 3,
+          "LUT3": 10,
+          "LUT4": 1,
+          "LUT5": 1,
+          "LUT6": 4,
+          "OBUF": 10
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_car_parking_management_0001",
+      "domain": "fsm",
+      "difficulty": "medium",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 392.849,
+      "round_times_seconds": [
+        146.224,
+        68.321,
+        83.294,
+        95.01
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 54,
+        "ffs": 12,
+        "cells_by_type": {
+          "BUFG": 1,
+          "CARRY4": 4,
+          "FDCE": 9,
+          "FDPE": 3,
+          "IBUF": 4,
+          "INV": 8,
+          "LUT2": 9,
+          "LUT3": 6,
+          "LUT4": 24,
+          "LUT5": 5,
+          "LUT6": 10,
+          "OBUF": 37
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_sorter_0001",
+      "domain": "memory",
+      "difficulty": "easy",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 565.588,
+      "round_times_seconds": [
+        148.792,
+        112.939,
+        168.177,
+        135.68
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 179,
+        "ffs": 138,
+        "cells_by_type": {
+          "BUFG": 1,
+          "CARRY4": 3,
+          "FDCE": 73,
+          "FDPE": 1,
+          "FDRE": 64,
+          "IBUF": 67,
+          "INV": 2,
+          "LUT2": 16,
+          "LUT3": 17,
+          "LUT4": 15,
+          "LUT5": 105,
+          "LUT6": 26,
+          "OBUF": 65
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_moving_average_0001",
+      "domain": "memory",
+      "difficulty": "easy",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 301.298,
+      "round_times_seconds": [
+        85.437,
+        83.094,
+        79.921,
+        52.846
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 27,
+        "ffs": 111,
+        "cells_by_type": {
+          "BUFG": 1,
+          "CARRY4": 4,
+          "FDRE": 111,
+          "IBUF": 14,
+          "INV": 3,
+          "LUT2": 3,
+          "LUT3": 12,
+          "LUT4": 7,
+          "LUT5": 1,
+          "LUT6": 4,
+          "OBUF": 12
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_sync_lifo_0001",
+      "domain": "memory",
+      "difficulty": "medium",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 231.118,
+      "round_times_seconds": [
+        65.429,
+        55.468,
+        47.632,
+        62.589
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 42,
+        "ffs": 76,
+        "cells_by_type": {
+          "BUFG": 1,
+          "CARRY4": 2,
+          "FDRE": 76,
+          "IBUF": 12,
+          "INV": 4,
+          "LUT2": 2,
+          "LUT3": 3,
+          "LUT4": 1,
+          "LUT5": 2,
+          "LUT6": 34,
+          "OBUF": 10
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_secure_read_write_register_bank_0001",
+      "domain": "memory",
+      "difficulty": "medium",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 460.761,
+      "round_times_seconds": [
+        143.796,
+        97.869,
+        104.67,
+        114.426
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 21,
+        "ffs": 10,
+        "cells_by_type": {
+          "BUFG": 1,
+          "FDCE": 10,
+          "IBUF": 19,
+          "INV": 1,
+          "LUT2": 2,
+          "LUT3": 1,
+          "LUT4": 4,
+          "LUT5": 11,
+          "LUT6": 3,
+          "OBUF": 8,
+          "RAM256X1S": 8
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_load_store_unit_0001",
+      "domain": "memory",
+      "difficulty": "medium",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 328.409,
+      "round_times_seconds": [
+        102.379,
+        63.245,
+        99.297,
+        63.488
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 109,
+        "ffs": 107,
+        "cells_by_type": {
+          "BUFG": 1,
+          "CARRY4": 8,
+          "FDCE": 105,
+          "FDPE": 2,
+          "IBUF": 136,
+          "INV": 1,
+          "LUT2": 98,
+          "LUT4": 3,
+          "LUT5": 5,
+          "LUT6": 3,
+          "OBUF": 104
+        },
+        "synth_error": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_64b66b_encoder_0001",
+      "domain": "protocol",
+      "difficulty": "easy",
+      "status": "pass",
+      "failure_type": null,
+      "total_time_seconds": 54.844,
+      "round_times_seconds": [
+        12.122,
+        17.24,
+        12.276,
+        13.206
+      ],
+      "api_warning": null,
+      "error_message": null,
+      "yosys": {
+        "synth_ok": true,
+        "luts": 67,
+        "ffs": 66,
+        "cells_by_type": {
+          "BUFG": 1,
+          "FDCE": 66,
+          "IBUF": 74,
+          "LUT4": 1,
+          "LUT5": 2,
+          "LUT6": 64,
+          "OBUF": 66
+        },
+        "synth_error": null
+      }
+    }
+  ]
+}

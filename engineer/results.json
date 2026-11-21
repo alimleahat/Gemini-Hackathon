@@ -1,0 +1,1295 @@
+{
+  "metadata": {
+    "timestamp_utc": "2026-11-21T19:50:56.212773+00:00",
+    "design_model": "gemini-4-neon",
+    "testbench_model": "gemini-4-hydrogen",
+    "max_fix_rounds": 4,
+    "completed_problems": 20,
+    "total_problems": 20,
+    "total_wall_seconds": 180.39
+  },
+  "summary": {
+    "baseline_single_neon": {
+      "passed": 15,
+      "total": 20,
+      "pass_rate_pct": 75.0,
+      "avg_luts": 49.1,
+      "avg_ffs": 50.9,
+      "avg_time_seconds": 154.236
+    },
+    "loop_before_optimization": {
+      "passed": 15,
+      "total": 20,
+      "pass_rate_pct": 75.0,
+      "avg_luts": 57.5,
+      "avg_ffs": 56.4,
+      "synthesized_count": 15
+    },
+    "loop_after_optimization": {
+      "passed": 14,
+      "total": 20,
+      "pass_rate_pct": 70.0,
+      "avg_luts": 34.1,
+      "avg_ffs": 36.4,
+      "synthesized_count": 14
+    },
+    "avg_time_per_problem_seconds": 461.04,
+    "fixed_by_loop_vs_baseline": [
+      "cvdp_copilot_axi_register_0001"
+    ],
+    "still_failed": [
+      "cvdp_copilot_restoring_division_0001",
+      "cvdp_copilot_vending_machine_0001",
+      "cvdp_copilot_microcode_sequencer_0001",
+      "cvdp_copilot_sync_lifo_0001",
+      "cvdp_copilot_apb_gpio_0001",
+      "cvdp_copilot_wb2ahb_0001"
+    ],
+    "optimization_broke_cvdp": [
+      "cvdp_copilot_restoring_division_0001",
+      "cvdp_copilot_sync_lifo_0001"
+    ],
+    "optimization_kept_and_passed": [
+      {
+        "problem": "cvdp_copilot_complex_multiplier_0001",
+        "pre_luts": 33,
+        "pre_ffs": 64,
+        "final_luts": 0,
+        "final_ffs": 32
+      },
+      {
+        "problem": "cvdp_copilot_16qam_mapper_0001",
+        "pre_luts": 12,
+        "pre_ffs": 0,
+        "final_luts": 0,
+        "final_ffs": 0
+      },
+      {
+        "problem": "cvdp_copilot_hill_cipher_0001",
+        "pre_luts": 203,
+        "pre_ffs": 145,
+        "final_luts": 16,
+        "final_ffs": 32
+      },
+      {
+        "problem": "cvdp_copilot_bcd_counter_0001",
+        "pre_luts": 26,
+        "pre_ffs": 24,
+        "final_luts": 22,
+        "final_ffs": 20
+      },
+      {
+        "problem": "cvdp_copilot_thermostat_0001",
+        "pre_luts": 21,
+        "pre_ffs": 11,
+        "final_luts": 14,
+        "final_ffs": 5
+      },
+      {
+        "problem": "cvdp_copilot_car_parking_management_0001",
+        "pre_luts": 35,
+        "pre_ffs": 12,
+        "final_luts": 24,
+        "final_ffs": 4
+      },
+      {
+        "problem": "cvdp_copilot_sorter_0001",
+        "pre_luts": 159,
+        "pre_ffs": 138,
+        "final_luts": 87,
+        "final_ffs": 134
+      },
+      {
+        "problem": "cvdp_copilot_moving_average_0001",
+        "pre_luts": 27,
+        "pre_ffs": 111,
+        "final_luts": 35,
+        "final_ffs": 19
+      },
+      {
+        "problem": "cvdp_copilot_load_store_unit_0001",
+        "pre_luts": 109,
+        "pre_ffs": 107,
+        "final_luts": 106,
+        "final_ffs": 102
+      },
+      {
+        "problem": "cvdp_copilot_axi_register_0001",
+        "pre_luts": 53,
+        "pre_ffs": 67,
+        "final_luts": 44,
+        "final_ffs": 53
+      },
+      {
+        "problem": "cvdp_copilot_vga_controller_0001",
+        "pre_luts": 78,
+        "pre_ffs": 40,
+        "final_luts": 45,
+        "final_ffs": 31
+      }
+    ]
+  },
+  "results": [
+    {
+      "problem": "cvdp_copilot_complex_multiplier_0001",
+      "domain": "arithmetic",
+      "difficulty": "easy",
+      "elapsed_seconds": 451.69,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 30.26,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 414.44,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 97 to 32 (65 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 97 to 32 (65 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 33,
+        "pre_ffs": 64,
+        "opt_luts": 0,
+        "opt_ffs": 32,
+        "elapsed_seconds": 414.44
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 33,
+        "ffs": 64
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 32
+      }
+    },
+    {
+      "problem": "cvdp_copilot_matrix_multiplier_0001",
+      "domain": "arithmetic",
+      "difficulty": "easy",
+      "elapsed_seconds": 175.25,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 75.63,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 87.67,
+          "hydrogen_passed": true,
+          "kept": false,
+          "reason": "Rejected: not smaller (0 vs 0)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": false,
+        "reason": "Rejected: not smaller (0 vs 0)",
+        "hydrogen_passed": true,
+        "pre_luts": 0,
+        "pre_ffs": 0,
+        "opt_luts": 0,
+        "opt_ffs": 0,
+        "elapsed_seconds": 87.67
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0
+      }
+    },
+    {
+      "problem": "cvdp_copilot_restoring_division_0001",
+      "domain": "arithmetic",
+      "difficulty": "medium",
+      "elapsed_seconds": 702.76,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 273.34,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 361.78,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 73 to 45 (28 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 73 to 45 (28 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 32,
+        "pre_ffs": 41,
+        "opt_luts": 23,
+        "opt_ffs": 22,
+        "elapsed_seconds": 361.78
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 32,
+        "ffs": 41
+      },
+      "cvdp_final": {
+        "status": "fail",
+        "failure_type": "timeout",
+        "error_message": "Timed out after 60s"
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 23,
+        "ffs": 22
+      }
+    },
+    {
+      "problem": "cvdp_copilot_16qam_mapper_0001",
+      "domain": "arithmetic",
+      "difficulty": "medium",
+      "elapsed_seconds": 381.23,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 68.55,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 301.07,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 12 to 0 (12 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 12 to 0 (12 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 12,
+        "pre_ffs": 0,
+        "opt_luts": 0,
+        "opt_ffs": 0,
+        "elapsed_seconds": 301.07
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 12,
+        "ffs": 0
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0
+      }
+    },
+    {
+      "problem": "cvdp_copilot_hill_cipher_0001",
+      "domain": "arithmetic",
+      "difficulty": "medium",
+      "elapsed_seconds": 487.89,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 138.38,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 342.31,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 348 to 48 (300 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 348 to 48 (300 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 203,
+        "pre_ffs": 145,
+        "opt_luts": 16,
+        "opt_ffs": 32,
+        "elapsed_seconds": 342.31
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 203,
+        "ffs": 145
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 16,
+        "ffs": 32
+      }
+    },
+    {
+      "problem": "cvdp_copilot_bcd_counter_0001",
+      "domain": "fsm",
+      "difficulty": "easy",
+      "elapsed_seconds": 246.52,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 32.99,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 202.65,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 50 to 42 (8 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 50 to 42 (8 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 26,
+        "pre_ffs": 24,
+        "opt_luts": 22,
+        "opt_ffs": 20,
+        "elapsed_seconds": 202.65
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 26,
+        "ffs": 24
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 22,
+        "ffs": 20
+      }
+    },
+    {
+      "problem": "cvdp_copilot_vending_machine_0001",
+      "domain": "fsm",
+      "difficulty": "medium",
+      "elapsed_seconds": 544.51,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 211.44,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 323.27,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 85 to 61 (24 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 85 to 61 (24 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 56,
+        "pre_ffs": 29,
+        "opt_luts": 48,
+        "opt_ffs": 13,
+        "elapsed_seconds": 323.27
+      },
+      "cvdp_pre_opt": {
+        "status": "fail",
+        "failure_type": "test_failure",
+        "error_message": "AssertionError: Expected item to be dispensed!\n                                                        ** test_vending_machine.test_vending_machine   FAIL         190.00           0.00     140649.09  **\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                             190.00           0.00      51710.97  **\nFAILED\n                                                        AssertionError: Expected item to be dispensed!\n                                                        ** test_vending_mac"
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 56,
+        "ffs": 29
+      },
+      "cvdp_final": {
+        "status": "fail",
+        "failure_type": "test_failure",
+        "error_message": "AssertionError: Expected item to be dispensed!\n                                                        ** test_vending_machine.test_vending_machine   FAIL         190.00           0.00     131940.03  **\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                             190.00           0.00      50396.37  **\nFAILED\n                                                        AssertionError: Expected item to be dispensed!\n                                                        ** test_vending_mac"
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 48,
+        "ffs": 13
+      }
+    },
+    {
+      "problem": "cvdp_copilot_thermostat_0001",
+      "domain": "fsm",
+      "difficulty": "medium",
+      "elapsed_seconds": 515.54,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 172.81,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 336.47,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 32 to 19 (13 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 32 to 19 (13 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 21,
+        "pre_ffs": 11,
+        "opt_luts": 14,
+        "opt_ffs": 5,
+        "elapsed_seconds": 336.47
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 21,
+        "ffs": 11
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 14,
+        "ffs": 5
+      }
+    },
+    {
+      "problem": "cvdp_copilot_car_parking_management_0001",
+      "domain": "fsm",
+      "difficulty": "medium",
+      "elapsed_seconds": 406.91,
+      "fix_rounds_used": 1,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 118.08,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": false,
+          "compile_ok": false,
+          "error_snippet": "/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/eng_sim_kpjuv0dt/rtl/car_parking_system.sv:60: error: This assignment requires an explicit cast.\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/eng_sim_kpjuv0dt/rtl/car_parking_system.sv:78: error: This assignment requires an explicit cast.\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/eng_sim_kpjuv0dt/rtl/car_parking_system.sv:87: error: This assignment requires an explicit cast.\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/eng_sim_kpjuv"
+        },
+        {
+          "round": 1,
+          "stage": "fix",
+          "elapsed_seconds": 34.81,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 2,
+          "stage": "optimize",
+          "elapsed_seconds": 246.37,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 47 to 28 (19 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 47 to 28 (19 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 35,
+        "pre_ffs": 12,
+        "opt_luts": 24,
+        "opt_ffs": 4,
+        "elapsed_seconds": 246.37
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 35,
+        "ffs": 12
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 24,
+        "ffs": 4
+      }
+    },
+    {
+      "problem": "cvdp_copilot_microcode_sequencer_0001",
+      "domain": "fsm",
+      "difficulty": "medium",
+      "elapsed_seconds": 180.38,
+      "error": "Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options.",
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": false,
+      "rounds": [],
+      "optimization": {
+        "attempted": false,
+        "kept": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "cvdp_pre_opt": {
+        "status": "fail",
+        "failure_type": "exception",
+        "error_message": "Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "yosys_pre_opt": {
+        "synth_ok": false,
+        "luts": null,
+        "ffs": null
+      },
+      "cvdp_final": {
+        "status": "fail",
+        "failure_type": "exception",
+        "error_message": "Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "yosys_final": {
+        "synth_ok": false,
+        "luts": null,
+        "ffs": null
+      }
+    },
+    {
+      "problem": "cvdp_copilot_sorter_0001",
+      "domain": "memory",
+      "difficulty": "easy",
+      "elapsed_seconds": 486.97,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 136.29,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 334.99,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 297 to 221 (76 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 297 to 221 (76 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 159,
+        "pre_ffs": 138,
+        "opt_luts": 87,
+        "opt_ffs": 134,
+        "elapsed_seconds": 334.99
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 159,
+        "ffs": 138
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 87,
+        "ffs": 134
+      }
+    },
+    {
+      "problem": "cvdp_copilot_moving_average_0001",
+      "domain": "memory",
+      "difficulty": "easy",
+      "elapsed_seconds": 386.44,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 55.07,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 323.6,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 138 to 54 (84 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 138 to 54 (84 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 27,
+        "pre_ffs": 111,
+        "opt_luts": 35,
+        "opt_ffs": 19,
+        "elapsed_seconds": 323.6
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 27,
+        "ffs": 111
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 35,
+        "ffs": 19
+      }
+    },
+    {
+      "problem": "cvdp_copilot_sync_lifo_0001",
+      "domain": "memory",
+      "difficulty": "medium",
+      "elapsed_seconds": 402.44,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 62.55,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 332.04,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 118 to 23 (95 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 118 to 23 (95 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 42,
+        "pre_ffs": 76,
+        "opt_luts": 11,
+        "opt_ffs": 12,
+        "elapsed_seconds": 332.04
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 42,
+        "ffs": 76
+      },
+      "cvdp_final": {
+        "status": "fail",
+        "failure_type": "test_failure",
+        "error_message": "AssertionError: Expected 2, got 8\n                                                        ** test_sync_lifo.lifo_test       FAIL         160.00           0.00     103101.65  **\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                160.00           0.00      39429.41  **\nFAILED\n                                                        AssertionError: Expected 64, got 140\n                                                        ** test_sync_lifo.lifo_test       FAIL         200.00           0.00"
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 11,
+        "ffs": 12
+      }
+    },
+    {
+      "problem": "cvdp_copilot_secure_read_write_register_bank_0001",
+      "domain": "memory",
+      "difficulty": "medium",
+      "elapsed_seconds": 520.37,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 126.53,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 389.74,
+          "hydrogen_passed": true,
+          "kept": false,
+          "reason": "Rejected: not smaller (30 vs 29)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": false,
+        "reason": "Rejected: not smaller (30 vs 29)",
+        "hydrogen_passed": true,
+        "pre_luts": 18,
+        "pre_ffs": 11,
+        "opt_luts": 19,
+        "opt_ffs": 11,
+        "elapsed_seconds": 389.74
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 18,
+        "ffs": 11
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 18,
+        "ffs": 11
+      }
+    },
+    {
+      "problem": "cvdp_copilot_load_store_unit_0001",
+      "domain": "memory",
+      "difficulty": "medium",
+      "elapsed_seconds": 414.12,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 92.58,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 314.82,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 216 to 208 (8 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 216 to 208 (8 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 109,
+        "pre_ffs": 107,
+        "opt_luts": 106,
+        "opt_ffs": 102,
+        "elapsed_seconds": 314.82
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 109,
+        "ffs": 107
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 106,
+        "ffs": 102
+      }
+    },
+    {
+      "problem": "cvdp_copilot_64b66b_encoder_0001",
+      "domain": "protocol",
+      "difficulty": "easy",
+      "elapsed_seconds": 397.32,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 23.59,
+          "tb_syntax_fixed": true,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 329.76,
+          "hydrogen_passed": true,
+          "kept": false,
+          "reason": "Rejected: not smaller (133 vs 133)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": false,
+        "reason": "Rejected: not smaller (133 vs 133)",
+        "hydrogen_passed": true,
+        "pre_luts": 67,
+        "pre_ffs": 66,
+        "opt_luts": 67,
+        "opt_ffs": 66,
+        "elapsed_seconds": 329.76
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 67,
+        "ffs": 66
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 67,
+        "ffs": 66
+      }
+    },
+    {
+      "problem": "cvdp_copilot_apb_gpio_0001",
+      "domain": "protocol",
+      "difficulty": "medium",
+      "elapsed_seconds": 578.95,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 225.69,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 348.77,
+          "hydrogen_passed": true,
+          "kept": false,
+          "reason": "Rejected: not smaller (117 vs 116)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": false,
+        "reason": "Rejected: not smaller (117 vs 116)",
+        "hydrogen_passed": true,
+        "pre_luts": 52,
+        "pre_ffs": 64,
+        "opt_luts": 53,
+        "opt_ffs": 64,
+        "elapsed_seconds": 348.77
+      },
+      "cvdp_pre_opt": {
+        "status": "fail",
+        "failure_type": "test_failure",
+        "error_message": "860.00ns ERROR    root                               FAIL: Interrupt State Register mismatch (Level-Triggered). Expected: 0x55, Got: 0xAA\n   860.00ns ERROR    cocotb.cvdp_copilot_apb_gpio       Test 4 completed with failures:\n                                                        FAIL: Interrupt State Register mismatch (Level-Triggered). Expected: 0x55, Got: 0xAA\n                                                          FAIL: Interrupt State Register mismatch (Level-Triggered). Expected: 0x55, Got: 0xAA\n                                                        AssertionError: Some test cases"
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 52,
+        "ffs": 64
+      },
+      "cvdp_final": {
+        "status": "fail",
+        "failure_type": "test_failure",
+        "error_message": "860.00ns ERROR    root                               FAIL: Interrupt State Register mismatch (Level-Triggered). Expected: 0x55, Got: 0xAA\n   860.00ns ERROR    cocotb.cvdp_copilot_apb_gpio       Test 4 completed with failures:\n                                                        FAIL: Interrupt State Register mismatch (Level-Triggered). Expected: 0x55, Got: 0xAA\n                                                          FAIL: Interrupt State Register mismatch (Level-Triggered). Expected: 0x55, Got: 0xAA\n                                                        AssertionError: Some test cases"
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 52,
+        "ffs": 64
+      }
+    },
+    {
+      "problem": "cvdp_copilot_axi_register_0001",
+      "domain": "protocol",
+      "difficulty": "medium",
+      "elapsed_seconds": 424.71,
+      "fix_rounds_used": 0,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 186.05,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 1,
+          "stage": "optimize",
+          "elapsed_seconds": 227.63,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 120 to 97 (23 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 120 to 97 (23 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 53,
+        "pre_ffs": 67,
+        "opt_luts": 44,
+        "opt_ffs": 53,
+        "elapsed_seconds": 227.63
+      },
+      "cvdp_pre_opt": {
+        "status": "fail",
+        "failure_type": "test_failure",
+        "error_message": "1140.00ns ERROR    cocotb.axi_register                CTRL_ID test failed: expected=0x1, got=0x0\n                                                        AssertionError: CTRL_ID test failed: expected=0x1, got=0x0\n                                                        ** test_axi_register.test_axi_register   FAIL        1140.00           0.00     275893.29  **\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                      1140.00           0.01     170786.39  **\nFAILED\n  1140.00ns ERROR    cocotb.axi_register                CTRL_ID test failed: ex"
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 53,
+        "ffs": 67
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 44,
+        "ffs": 53
+      }
+    },
+    {
+      "problem": "cvdp_copilot_wb2ahb_0001",
+      "domain": "protocol",
+      "difficulty": "medium",
+      "elapsed_seconds": 668.58,
+      "fix_rounds_used": 1,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 295.29,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": false,
+          "compile_ok": true,
+          "error_snippet": "INFO: Running Test 1 - Reset Behavior\nINFO: Running Test 2 - Basic Word Write & Read\nINFO: Running Test 3 - Address Fixing\nINFO: Running Test 4 - Byte-Level Transactions\nFAIL: [855000] Word read mismatch at 00000010: expected a0b1c2ef, got a0b1c200\nFAIL: [955000] Word read mismatch at 00000010: expected a0b178ef, got a0b10000\nFAIL: [1055000] Word read mismatch at 00000010: expected a05678ef, got a0000000\nFAIL: [1155000] Word read mismatch at 00000010: expected 345678ef, got 00000000\nFAIL: [12050"
+        },
+        {
+          "round": 1,
+          "stage": "fix",
+          "elapsed_seconds": 113.78,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 2,
+          "stage": "optimize",
+          "elapsed_seconds": 253.12,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 260 to 217 (43 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 260 to 217 (43 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 120,
+        "pre_ffs": 140,
+        "opt_luts": 83,
+        "opt_ffs": 134,
+        "elapsed_seconds": 253.12
+      },
+      "cvdp_pre_opt": {
+        "status": "fail",
+        "failure_type": "test_failure",
+        "error_message": "50.00ns WARNING  ..idge.test_wishbone_to_ahb_bridge ERROR: hwrite should be 1, got 0\n                                                            assert dut.hwrite.value == 1, f\"ERROR: hwrite should be 1, got {dut.hwrite.value}\"\n                                                        AssertionError: ERROR: hwrite should be 1, got 0\n                                                        ** test_wishbone_to_ahb_bridge.test_wishbone_to_ahb_bridge   FAIL          50.00           0.00      46253.90  **\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0"
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 120,
+        "ffs": 140
+      },
+      "cvdp_final": {
+        "status": "fail",
+        "failure_type": "test_failure",
+        "error_message": "50.00ns WARNING  ..idge.test_wishbone_to_ahb_bridge ERROR: hwrite should be 1, got 0\n                                                            assert dut.hwrite.value == 1, f\"ERROR: hwrite should be 1, got {dut.hwrite.value}\"\n                                                        AssertionError: ERROR: hwrite should be 1, got 0\n                                                        ** test_wishbone_to_ahb_bridge.test_wishbone_to_ahb_bridge   FAIL          50.00           0.00      63607.89  **\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0"
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 83,
+        "ffs": 134
+      }
+    },
+    {
+      "problem": "cvdp_copilot_vga_controller_0001",
+      "domain": "protocol",
+      "difficulty": "medium",
+      "elapsed_seconds": 848.13,
+      "fix_rounds_used": 1,
+      "hydrogen_passed_pre_opt": true,
+      "rounds": [
+        {
+          "round": 0,
+          "stage": "initial",
+          "elapsed_seconds": 159.08,
+          "tb_syntax_fixed": false,
+          "hydrogen_passed": false,
+          "compile_ok": true,
+          "error_snippet": "FAIL: line=0 col=0 blank expected 0 during active, got 1\nFAIL: line=0 col=1 blank expected 0 during active, got 1\nFAIL: line=0 col=2 blank expected 0 during active, got 1\nFAIL: line=0 col=3 blank expected 0 during active, got 1\nFAIL: line=0 col=4 blank expected 0 during active, got 1\nFAIL: line=0 col=5 blank expected 0 during active, got 1\nFAIL: line=0 col=6 blank expected 0 during active, got 1\nFAIL: line=0 col=7 blank expected 0 during active, got 1\nFAIL: line=0 col=8 blank expected 0 during a"
+        },
+        {
+          "round": 1,
+          "stage": "fix",
+          "elapsed_seconds": 335.98,
+          "hydrogen_passed": true,
+          "compile_ok": true,
+          "error_snippet": null
+        },
+        {
+          "round": 2,
+          "stage": "optimize",
+          "elapsed_seconds": 326.87,
+          "hydrogen_passed": true,
+          "kept": true,
+          "reason": "Reduced LUT+FF from 118 to 76 (42 saved)"
+        }
+      ],
+      "optimization": {
+        "attempted": true,
+        "kept": true,
+        "reason": "Reduced LUT+FF from 118 to 76 (42 saved)",
+        "hydrogen_passed": true,
+        "pre_luts": 78,
+        "pre_ffs": 40,
+        "opt_luts": 45,
+        "opt_ffs": 31,
+        "elapsed_seconds": 326.87
+      },
+      "cvdp_pre_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_pre_opt": {
+        "synth_ok": true,
+        "luts": 78,
+        "ffs": 40
+      },
+      "cvdp_final": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "yosys_final": {
+        "synth_ok": true,
+        "luts": 45,
+        "ffs": 31
+      }
+    }
+  ]
+}
