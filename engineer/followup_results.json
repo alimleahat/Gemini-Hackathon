@@ -1,0 +1,1502 @@
+{
+  "metadata": {
+    "timestamp_utc": "2026-11-21T20:16:35.716522+00:00",
+    "model": "gemini-4-neon"
+  },
+  "summary": {
+    "fair_comparison_no_equiv_gate": {
+      "intersection_count": 13,
+      "intersection_problems": [
+        "cvdp_copilot_complex_multiplier_0001",
+        "cvdp_copilot_matrix_multiplier_0001",
+        "cvdp_copilot_16qam_mapper_0001",
+        "cvdp_copilot_hill_cipher_0001",
+        "cvdp_copilot_bcd_counter_0001",
+        "cvdp_copilot_thermostat_0001",
+        "cvdp_copilot_car_parking_management_0001",
+        "cvdp_copilot_sorter_0001",
+        "cvdp_copilot_moving_average_0001",
+        "cvdp_copilot_secure_read_write_register_bank_0001",
+        "cvdp_copilot_load_store_unit_0001",
+        "cvdp_copilot_64b66b_encoder_0001",
+        "cvdp_copilot_vga_controller_0001"
+      ],
+      "baseline": {
+        "count": 13,
+        "avg_luts": 51.4,
+        "avg_ffs": 50.6,
+        "avg_dsps": 5.46,
+        "avg_brams": 0.0
+      },
+      "pre_opt": {
+        "count": 13,
+        "avg_luts": 60.6,
+        "avg_ffs": 56.1,
+        "avg_dsps": 5.92,
+        "avg_brams": 0.0
+      },
+      "post_opt_no_equiv": {
+        "count": 13,
+        "avg_luts": 33.4,
+        "avg_ffs": 35.1,
+        "avg_dsps": 6.08,
+        "avg_brams": 0.0
+      }
+    },
+    "dsp_bram_shifts": [
+      {
+        "problem": "cvdp_copilot_hill_cipher_0001",
+        "flags": [
+          "DSP increased vs pre_opt (9 -> 12)",
+          "DSP increased vs baseline (3 -> 12)"
+        ],
+        "baseline": {
+          "luts": 80,
+          "ffs": 74,
+          "dsps": 3,
+          "brams": 0,
+          "dist_rams": 0
+        },
+        "pre_opt": {
+          "luts": 203,
+          "ffs": 145,
+          "dsps": 9,
+          "brams": 0,
+          "dist_rams": 0
+        },
+        "post_opt": {
+          "luts": 16,
+          "ffs": 32,
+          "dsps": 12,
+          "brams": 0,
+          "dist_rams": 0
+        }
+      },
+      {
+        "problem": "cvdp_copilot_sync_lifo_0001",
+        "flags": [
+          "DistRAM increased vs pre_opt (0 -> 1)"
+        ],
+        "baseline": {
+          "luts": 39,
+          "ffs": 76,
+          "dsps": 0,
+          "brams": 0,
+          "dist_rams": 0
+        },
+        "pre_opt": {
+          "luts": 42,
+          "ffs": 76,
+          "dsps": 0,
+          "brams": 0,
+          "dist_rams": 0
+        },
+        "post_opt": {
+          "luts": 11,
+          "ffs": 12,
+          "dsps": 0,
+          "brams": 0,
+          "dist_rams": 1
+        }
+      }
+    ],
+    "equiv_gate_rerun": {
+      "pre_opt_passing_count": 15,
+      "after_equiv_opt_passing_count": 15,
+      "after_equiv_opt_pass_rate_pct": 75.0,
+      "optimizations_kept_count": 2,
+      "optimizations_kept": [
+        "cvdp_copilot_16qam_mapper_0001",
+        "cvdp_copilot_thermostat_0001"
+      ],
+      "breakages_after_equiv_gate": [],
+      "prevented_restoring_division_breakage": true,
+      "prevented_sync_lifo_breakage": true,
+      "wall_seconds": 723.83
+    },
+    "fair_comparison_with_equiv_gate": {
+      "intersection_count": 15,
+      "intersection_problems": [
+        "cvdp_copilot_complex_multiplier_0001",
+        "cvdp_copilot_matrix_multiplier_0001",
+        "cvdp_copilot_restoring_division_0001",
+        "cvdp_copilot_16qam_mapper_0001",
+        "cvdp_copilot_hill_cipher_0001",
+        "cvdp_copilot_bcd_counter_0001",
+        "cvdp_copilot_thermostat_0001",
+        "cvdp_copilot_car_parking_management_0001",
+        "cvdp_copilot_sorter_0001",
+        "cvdp_copilot_moving_average_0001",
+        "cvdp_copilot_sync_lifo_0001",
+        "cvdp_copilot_secure_read_write_register_bank_0001",
+        "cvdp_copilot_load_store_unit_0001",
+        "cvdp_copilot_64b66b_encoder_0001",
+        "cvdp_copilot_vga_controller_0001"
+      ],
+      "baseline": {
+        "count": 15,
+        "avg_luts": 49.1,
+        "avg_ffs": 50.9,
+        "avg_dsps": 4.73,
+        "avg_brams": 0.0
+      },
+      "pre_opt": {
+        "count": 15,
+        "avg_luts": 57.5,
+        "avg_ffs": 56.4,
+        "avg_dsps": 5.13,
+        "avg_brams": 0.0
+      },
+      "post_opt_equiv": {
+        "count": 15,
+        "avg_luts": 56.2,
+        "avg_ffs": 56.0,
+        "avg_dsps": 5.13,
+        "avg_brams": 0.0
+      }
+    }
+  },
+  "resource_audit": {
+    "cvdp_copilot_complex_multiplier_0001": {
+      "domain": "arithmetic",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 33,
+        "ffs": 64,
+        "carries": 8,
+        "dsps": 4,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 33,
+        "ffs": 64,
+        "carries": 8,
+        "dsps": 4,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 32,
+        "carries": 0,
+        "dsps": 3,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 33,
+        "ffs": 64,
+        "carries": 8,
+        "dsps": 4,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_matrix_multiplier_0001": {
+      "domain": "arithmetic",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0,
+        "carries": 0,
+        "dsps": 64,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0,
+        "carries": 0,
+        "dsps": 64,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0,
+        "carries": 0,
+        "dsps": 64,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0,
+        "carries": 0,
+        "dsps": 64,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_restoring_division_0001": {
+      "domain": "arithmetic",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "fail",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 30,
+        "ffs": 29,
+        "carries": 3,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 32,
+        "ffs": 41,
+        "carries": 3,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 23,
+        "ffs": 22,
+        "carries": 2,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 32,
+        "ffs": 41,
+        "carries": 3,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_16qam_mapper_0001": {
+      "domain": "arithmetic",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 12,
+        "ffs": 0,
+        "carries": 4,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 12,
+        "ffs": 0,
+        "carries": 4,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0,
+        "carries": 7,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0,
+        "carries": 7,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_hill_cipher_0001": {
+      "domain": "arithmetic",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 80,
+        "ffs": 74,
+        "carries": 14,
+        "dsps": 3,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 203,
+        "ffs": 145,
+        "carries": 51,
+        "dsps": 9,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 16,
+        "ffs": 32,
+        "carries": 3,
+        "dsps": 12,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [
+        "DSP increased vs pre_opt (9 -> 12)",
+        "DSP increased vs baseline (3 -> 12)"
+      ],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 203,
+        "ffs": 145,
+        "carries": 51,
+        "dsps": 9,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_bcd_counter_0001": {
+      "domain": "fsm",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 26,
+        "ffs": 24,
+        "carries": 6,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 26,
+        "ffs": 24,
+        "carries": 6,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 22,
+        "ffs": 20,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 26,
+        "ffs": 24,
+        "carries": 6,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_vending_machine_0001": {
+      "domain": "fsm",
+      "baseline_status": "fail",
+      "pre_opt_status": "fail",
+      "post_opt_status": "fail",
+      "baseline": {
+        "synth_ok": false,
+        "luts": null,
+        "ffs": null,
+        "carries": null,
+        "dsps": null,
+        "brams": null,
+        "dist_rams": null
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 56,
+        "ffs": 29,
+        "carries": 4,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 48,
+        "ffs": 13,
+        "carries": 2,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 56,
+        "ffs": 29,
+        "carries": 4,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "fail"
+    },
+    "cvdp_copilot_thermostat_0001": {
+      "domain": "fsm",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 22,
+        "ffs": 11,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 21,
+        "ffs": 11,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 14,
+        "ffs": 5,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 14,
+        "ffs": 5,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_car_parking_management_0001": {
+      "domain": "fsm",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 39,
+        "ffs": 12,
+        "carries": 4,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 35,
+        "ffs": 12,
+        "carries": 8,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 24,
+        "ffs": 4,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 35,
+        "ffs": 12,
+        "carries": 8,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_microcode_sequencer_0001": {
+      "domain": "fsm",
+      "baseline_status": "fail",
+      "pre_opt_status": "fail",
+      "post_opt_status": "fail",
+      "baseline": {
+        "synth_ok": false,
+        "luts": null,
+        "ffs": null,
+        "carries": null,
+        "dsps": null,
+        "brams": null,
+        "dist_rams": null
+      },
+      "pre_opt": {
+        "synth_ok": false,
+        "luts": null,
+        "ffs": null,
+        "carries": null,
+        "dsps": null,
+        "brams": null,
+        "dist_rams": null
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": false,
+        "luts": null,
+        "ffs": null,
+        "carries": null,
+        "dsps": null,
+        "brams": null,
+        "dist_rams": null
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": false,
+        "luts": null,
+        "ffs": null,
+        "carries": null,
+        "dsps": null,
+        "brams": null,
+        "dist_rams": null
+      },
+      "post_opt_equiv_status": "fail"
+    },
+    "cvdp_copilot_sorter_0001": {
+      "domain": "memory",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 150,
+        "ffs": 139,
+        "carries": 3,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 159,
+        "ffs": 138,
+        "carries": 3,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 87,
+        "ffs": 134,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 159,
+        "ffs": 138,
+        "carries": 3,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_moving_average_0001": {
+      "domain": "memory",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 27,
+        "ffs": 111,
+        "carries": 4,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 27,
+        "ffs": 111,
+        "carries": 4,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 35,
+        "ffs": 19,
+        "carries": 4,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 27,
+        "ffs": 111,
+        "carries": 4,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_sync_lifo_0001": {
+      "domain": "memory",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "fail",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 39,
+        "ffs": 76,
+        "carries": 2,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 42,
+        "ffs": 76,
+        "carries": 2,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 11,
+        "ffs": 12,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 1
+      },
+      "shift_flags": [
+        "DistRAM increased vs pre_opt (0 -> 1)"
+      ],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 42,
+        "ffs": 76,
+        "carries": 2,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_secure_read_write_register_bank_0001": {
+      "domain": "memory",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 25,
+        "ffs": 11,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 8
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 18,
+        "ffs": 11,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 8
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 18,
+        "ffs": 11,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 8
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 18,
+        "ffs": 11,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 8
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_load_store_unit_0001": {
+      "domain": "memory",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 109,
+        "ffs": 107,
+        "carries": 8,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 109,
+        "ffs": 107,
+        "carries": 8,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 106,
+        "ffs": 102,
+        "carries": 8,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 109,
+        "ffs": 107,
+        "carries": 8,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_64b66b_encoder_0001": {
+      "domain": "protocol",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 67,
+        "ffs": 66,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 67,
+        "ffs": 66,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 67,
+        "ffs": 66,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 67,
+        "ffs": 66,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    },
+    "cvdp_copilot_apb_gpio_0001": {
+      "domain": "protocol",
+      "baseline_status": "fail",
+      "pre_opt_status": "fail",
+      "post_opt_status": "fail",
+      "baseline": {
+        "synth_ok": false,
+        "luts": null,
+        "ffs": null,
+        "carries": null,
+        "dsps": null,
+        "brams": null,
+        "dist_rams": null
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 52,
+        "ffs": 64,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 52,
+        "ffs": 64,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 52,
+        "ffs": 64,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "fail"
+    },
+    "cvdp_copilot_axi_register_0001": {
+      "domain": "protocol",
+      "baseline_status": "fail",
+      "pre_opt_status": "fail",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": false,
+        "luts": null,
+        "ffs": null,
+        "carries": null,
+        "dsps": null,
+        "brams": null,
+        "dist_rams": null
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 53,
+        "ffs": 67,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 44,
+        "ffs": 53,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 53,
+        "ffs": 67,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "fail"
+    },
+    "cvdp_copilot_wb2ahb_0001": {
+      "domain": "protocol",
+      "baseline_status": "fail",
+      "pre_opt_status": "fail",
+      "post_opt_status": "fail",
+      "baseline": {
+        "synth_ok": false,
+        "luts": null,
+        "ffs": null,
+        "carries": null,
+        "dsps": null,
+        "brams": null,
+        "dist_rams": null
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 120,
+        "ffs": 140,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 83,
+        "ffs": 134,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 120,
+        "ffs": 140,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "fail"
+    },
+    "cvdp_copilot_vga_controller_0001": {
+      "domain": "protocol",
+      "baseline_status": "pass",
+      "pre_opt_status": "pass",
+      "post_opt_status": "pass",
+      "baseline": {
+        "synth_ok": true,
+        "luts": 78,
+        "ffs": 39,
+        "carries": 6,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "pre_opt": {
+        "synth_ok": true,
+        "luts": 78,
+        "ffs": 40,
+        "carries": 6,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_no_equiv": {
+        "synth_ok": true,
+        "luts": 45,
+        "ffs": 31,
+        "carries": 6,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "shift_flags": [],
+      "post_opt_equiv": {
+        "synth_ok": true,
+        "luts": 78,
+        "ffs": 40,
+        "carries": 6,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      },
+      "post_opt_equiv_status": "pass"
+    }
+  },
+  "equiv_rerun_details": {
+    "cvdp_copilot_matrix_multiplier_0001": {
+      "problem": "cvdp_copilot_matrix_multiplier_0001",
+      "elapsed_seconds": 139.25,
+      "existing_final_equiv": null,
+      "fresh_opt_hydrogen_passed": true,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "ERROR: Found 642 unproven $equiv cells in 'equiv_status -assert'.",
+        "duration_ms": 9642
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: formal equivalence not proven (ERROR: Found 642 unproven $equiv cells in 'equiv_status -assert'.)",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0,
+        "carries": 0,
+        "dsps": 64,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_bcd_counter_0001": {
+      "problem": "cvdp_copilot_bcd_counter_0001",
+      "elapsed_seconds": 240.45,
+      "existing_final_equiv": {
+        "proven": false,
+        "reason": "ERROR: Found 26 unproven $equiv cells in 'equiv_status -assert'.",
+        "duration_ms": 376
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 26,
+        "ffs": 24,
+        "carries": 6,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_restoring_division_0001": {
+      "problem": "cvdp_copilot_restoring_division_0001",
+      "elapsed_seconds": 240.53,
+      "existing_final_equiv": {
+        "proven": false,
+        "reason": "ERROR: Found 62 unproven $equiv cells in 'equiv_status -assert'.",
+        "duration_ms": 484
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 32,
+        "ffs": 41,
+        "carries": 3,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_hill_cipher_0001": {
+      "problem": "cvdp_copilot_hill_cipher_0001",
+      "elapsed_seconds": 244.03,
+      "existing_final_equiv": {
+        "proven": false,
+        "reason": "ERROR: Found 36 unproven $equiv cells in 'equiv_status -assert'.",
+        "duration_ms": 3952
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 203,
+        "ffs": 145,
+        "carries": 51,
+        "dsps": 9,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_16qam_mapper_0001": {
+      "problem": "cvdp_copilot_16qam_mapper_0001",
+      "elapsed_seconds": 247.22,
+      "existing_final_equiv": {
+        "proven": true,
+        "reason": "Proven formally equivalent (0 unproven $equiv cells)",
+        "duration_ms": 74
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": true,
+      "kept_source": "existing_final_proven",
+      "reason": "Proven equivalent & smaller (existing_final_proven): LUT+FF 12 -> 0",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 0,
+        "ffs": 0,
+        "carries": 7,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_complex_multiplier_0001": {
+      "problem": "cvdp_copilot_complex_multiplier_0001",
+      "elapsed_seconds": 300.1,
+      "existing_final_equiv": {
+        "proven": false,
+        "reason": "Yosys equivalence check timed out after 60s",
+        "duration_ms": 60018
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 33,
+        "ffs": 64,
+        "carries": 8,
+        "dsps": 4,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_thermostat_0001": {
+      "problem": "cvdp_copilot_thermostat_0001",
+      "elapsed_seconds": 244.21,
+      "existing_final_equiv": {
+        "proven": true,
+        "reason": "Proven formally equivalent (0 unproven $equiv cells)",
+        "duration_ms": 141
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": true,
+      "kept_source": "existing_final_proven",
+      "reason": "Proven equivalent & smaller (existing_final_proven): LUT+FF 32 -> 19",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 14,
+        "ffs": 5,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_car_parking_management_0001": {
+      "problem": "cvdp_copilot_car_parking_management_0001",
+      "elapsed_seconds": 240.43,
+      "existing_final_equiv": {
+        "proven": false,
+        "reason": "ERROR: Found 17 unproven $equiv cells in 'equiv_status -assert'.",
+        "duration_ms": 334
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 35,
+        "ffs": 12,
+        "carries": 8,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_sorter_0001": {
+      "problem": "cvdp_copilot_sorter_0001",
+      "elapsed_seconds": 242.36,
+      "existing_final_equiv": {
+        "proven": false,
+        "reason": "port Q[0] of cell $procdff$147 ($dff) | ERROR: Found 66 unproven $equiv cells in 'equiv_status -assert'.",
+        "duration_ms": 2317
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 159,
+        "ffs": 138,
+        "carries": 3,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_moving_average_0001": {
+      "problem": "cvdp_copilot_moving_average_0001",
+      "elapsed_seconds": 240.37,
+      "existing_final_equiv": {
+        "proven": false,
+        "reason": "Warning: Replacing memory \\buffer with list of registers. See /var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/eng_equiv_r0zte5c3/gate/rtl/moving_average.v:17 | ERROR: Found 108 unproven $equiv cells in 'equiv_status -assert'.",
+        "duration_ms": 335
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 27,
+        "ffs": 111,
+        "carries": 4,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_sync_lifo_0001": {
+      "problem": "cvdp_copilot_sync_lifo_0001",
+      "elapsed_seconds": 240.35,
+      "existing_final_equiv": {
+        "proven": false,
+        "reason": "ERROR: Found 21 unproven $equiv cells in 'equiv_status -assert'.",
+        "duration_ms": 297
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 42,
+        "ffs": 76,
+        "carries": 2,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_secure_read_write_register_bank_0001": {
+      "problem": "cvdp_copilot_secure_read_write_register_bank_0001",
+      "elapsed_seconds": 240.1,
+      "existing_final_equiv": null,
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 18,
+        "ffs": 11,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 8
+      }
+    },
+    "cvdp_copilot_load_store_unit_0001": {
+      "problem": "cvdp_copilot_load_store_unit_0001",
+      "elapsed_seconds": 241.86,
+      "existing_final_equiv": {
+        "proven": false,
+        "reason": "ERROR: Found 72 unproven $equiv cells in 'equiv_status -assert'.",
+        "duration_ms": 1764
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 109,
+        "ffs": 107,
+        "carries": 8,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_64b66b_encoder_0001": {
+      "problem": "cvdp_copilot_64b66b_encoder_0001",
+      "elapsed_seconds": 240.1,
+      "existing_final_equiv": null,
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 67,
+        "ffs": 66,
+        "carries": 0,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    },
+    "cvdp_copilot_vga_controller_0001": {
+      "problem": "cvdp_copilot_vga_controller_0001",
+      "elapsed_seconds": 240.92,
+      "existing_final_equiv": {
+        "proven": false,
+        "reason": "ERROR: Found 24 unproven $equiv cells in 'equiv_status -assert'.",
+        "duration_ms": 798
+      },
+      "fresh_opt_hydrogen_passed": false,
+      "fresh_opt_equiv": {
+        "proven": false,
+        "reason": "Exception: Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      },
+      "kept": false,
+      "kept_source": "pre_opt",
+      "reason": "Kept pre-opt: candidate failed Hydrogen tests",
+      "cvdp_after_equiv_opt": {
+        "status": "pass",
+        "failure_type": null,
+        "error_message": null
+      },
+      "resources_after_equiv_opt": {
+        "synth_ok": true,
+        "luts": 78,
+        "ffs": 40,
+        "carries": 6,
+        "dsps": 0,
+        "brams": 0,
+        "dist_rams": 0
+      }
+    }
+  }
+}
