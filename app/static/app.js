@@ -34,6 +34,7 @@ const state = {
   latestVerilog: null,
   latestTestbench: null,
   latestCircuitName: null,
+  lastPipelinePayload: null,
 
   // Virtual FPGA Board state
   boardView: "3d", // "3d" | "2d" (3D default)
@@ -924,6 +925,7 @@ async function startPipeline(liveOverride = null) {
     return;
   }
 
+  state.lastPipelinePayload = { ...payload };
   state.running = true;
   $("btn-run").disabled = true;
   $("btn-run-label").textContent = "Running Pipeline...";
@@ -1030,7 +1032,13 @@ function renderGateStage(status, data) {
   }
 
   const passed = status === "done";
-  setCardStatus("gate", passed ? "done" : "rejected", passed ? "Pass" : "Retake");
+  const isWarning = status === "warning";
+  const isRejected = status === "rejected";
+  setCardStatus(
+    "gate",
+    passed ? "done" : isWarning ? "running" : "rejected",
+    passed ? "Pass" : isWarning ? "Low Conf" : "Blocked (<15%)"
+  );
   if (data.duration_ms != null) {
     setStageTiming("gate", `${(data.duration_ms / 1000).toFixed(1)}s`);
   }
@@ -1041,15 +1049,19 @@ function renderGateStage(status, data) {
 
   updateHeroMetric(
     "gate",
-    `${confPct}%`,
-    passed ? "accent" : "fail",
-    data.circuit_type_label || "Decision 1"
+    `${readPct}%`,
+    passed ? "accent" : isWarning ? "warn" : "fail",
+    isWarning ? "Low conf · continuing" : (data.circuit_type_label || "Decision 1")
   );
   showTopToast("pipeline", {
-    title: passed ? `Gate Passed · ${confPct}%` : `Gate Rejected · ${readPct}%`,
+    title: passed
+      ? `Gate Passed · ${readPct}%`
+      : isWarning
+      ? `Low Confidence (${readPct}%) · Continuing`
+      : `Not a Circuit (${readPct}%) · Stopped`,
     subtitle: data.circuit_type_label || "Decision 1",
-    status: passed ? "done" : "error",
-    autoDismissMs: passed ? 0 : 6000,
+    status: passed ? "done" : isWarning ? "running" : "error",
+    autoDismissMs: isRejected ? 8000 : 0,
   });
 
   let probsHtml = "";
@@ -1068,11 +1080,15 @@ function renderGateStage(status, data) {
       .join("");
   }
 
+  const buildAnywayBtn = isRejected
+    ? `<div style="margin-top:10px"><button type="button" id="btn-gate-build-anyway" class="btn-primary" style="padding:8px 16px;font-size:0.88rem">Build anyway →</button></div>`
+    : "";
+
   $("body-gate").innerHTML = `
     <div class="metric-grid">
       <div class="metric-tile">
         <div class="metric-label">Readable Circuit</div>
-        <div class="metric-value ${passed ? "green" : "red"}">${readPct}%</div>
+        <div class="metric-value ${passed ? "green" : isWarning ? "amber" : "red"}">${readPct}%</div>
       </div>
       <div class="metric-tile">
         <div class="metric-label">Gate Confidence</div>
@@ -1084,8 +1100,31 @@ function renderGateStage(status, data) {
       </div>
     </div>
     <div class="conf-bar-wrap">${probsHtml}</div>
-    <div class="alert-box ${passed ? "success" : "danger"}">${escapeHtml(data.reason)}</div>
+    <div class="alert-box ${passed ? "success" : isWarning ? "warning" : "danger"}">${escapeHtml(data.reason)}</div>
+    ${buildAnywayBtn}
   `;
+
+  if (isRejected) {
+    // Also show Build Anyway inside the Vision Overlay banner if visible
+    const banner = $("live-chosen-frame-banner");
+    if (banner) {
+      banner.classList.remove("hidden");
+      banner.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;flex-wrap:wrap">
+          <span><strong>Gate stopped (${readPct}% readable &lt; 15%):</strong> ${escapeHtml(data.reason)}</span>
+          <button type="button" id="btn-banner-build-anyway" class="btn-primary" style="padding:6px 14px;font-size:0.85rem">Build anyway →</button>
+        </div>
+      `;
+      $("btn-banner-build-anyway")?.addEventListener("click", () => {
+        if (!state.lastPipelinePayload) return;
+        startPipeline({ ...state.lastPipelinePayload, bypass_gate: true });
+      });
+    }
+    $("btn-gate-build-anyway")?.addEventListener("click", () => {
+      if (!state.lastPipelinePayload) return;
+      startPipeline({ ...state.lastPipelinePayload, bypass_gate: true });
+    });
+  }
 }
 
 function renderGenerateStage(status, data) {

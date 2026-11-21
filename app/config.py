@@ -34,8 +34,9 @@ LIVE_CONFIG = {
 
 # Step 2 (Decision Gate) thresholds
 GATE_CONFIG = {
-    "min_readable_prob": 0.60,          # Minimum P(yes) to accept input as a readable circuit
-    "min_confidence": 0.60,             # Minimum Decision 1 confidence to proceed
+    "min_readable_prob": 0.60,          # Below this: show warning but continue automatically
+    "min_confidence": 0.60,             # Below this: show warning but continue automatically
+    "hard_block_prob": 0.15,            # Only stop if readable < 15% (very unlikely to be a circuit)
 }
 
 # Step 4 (Icarus Verilog simulation)

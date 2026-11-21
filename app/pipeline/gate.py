@@ -115,33 +115,43 @@ def run_gate(
 
     min_prob = GATE_CONFIG["min_readable_prob"]
     min_conf = GATE_CONFIG["min_confidence"]
-    passed = (readable_prob >= min_prob) and (readable_conf >= min_conf)
+    hard_block_prob = GATE_CONFIG.get("hard_block_prob", 0.15)
 
-    if passed:
+    blocked = readable_prob < hard_block_prob
+    low_conf = (not blocked) and ((readable_prob < min_prob) or (readable_conf < min_conf))
+    passed = not blocked
+
+    if blocked:
+        if has_image:
+            reason = (
+                f"Very unlikely to be a circuit ({readable_prob * 100:.0f}% readable, "
+                f"{readable_conf * 100:.0f}% confidence — below 15% threshold). "
+                "Please retake the photo, or click 'Build anyway' to force a build."
+            )
+        else:
+            reason = (
+                f"Very unlikely to be a digital circuit ({readable_prob * 100:.0f}% valid). "
+                "Please clarify your description, or click 'Build anyway' to force a build."
+            )
+    elif low_conf:
+        reason = (
+            f"Low confidence warning ({readable_prob * 100:.0f}% readable, "
+            f"{readable_conf * 100:.0f}% confidence) — continuing build automatically as "
+            f"{CIRCUIT_TYPE_LABELS.get(circuit_type, circuit_type)}."
+        )
+    else:
         reason = (
             f"Readable {CIRCUIT_TYPE_LABELS.get(circuit_type, circuit_type)} detected "
             f"({readable_prob * 100:.0f}% yes, {readable_conf * 100:.0f}% confidence)."
         )
-    else:
-        if has_image:
-            reason = (
-                f"Low confidence ({readable_prob * 100:.0f}% readable, "
-                f"{readable_conf * 100:.0f}% confidence). "
-                "Please retake the photo with better lighting, sharper focus, "
-                "and a clear view of the circuit diagram."
-            )
-        else:
-            reason = (
-                f"Input does not clearly describe a digital circuit "
-                f"({readable_prob * 100:.0f}% valid, {readable_conf * 100:.0f}% confidence). "
-                "Please describe the inputs, outputs, and behavior of the circuit."
-            )
 
     duration_ms = round((time.perf_counter() - t0) * 1000)
 
     return {
         "model": MODELS["gate"],
         "passed": passed,
+        "blocked": blocked,
+        "warning": low_conf,
         "readable_prob": round(readable_prob, 4),
         "readable_confidence": round(readable_conf, 4),
         "circuit_type": circuit_type,

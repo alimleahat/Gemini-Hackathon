@@ -327,6 +327,7 @@ class AppHandler(BaseHTTPRequestHandler):
         baseline_mode = bool(body.get("baseline_mode", False))
         enable_improve = bool(body.get("enable_improve", True)) and not baseline_mode
         enable_synthesis = bool(body.get("enable_synthesis", True))
+        bypass_gate = bool(body.get("bypass_gate", False))
 
         if not image_b64 and not text_prompt:
             self._send_json({"error": "Please provide a circuit photo or a text description."}, status=400)
@@ -386,9 +387,10 @@ class AppHandler(BaseHTTPRequestHandler):
                 mime_type=mime_type,
                 text_prompt=text_prompt,
             )
+            gate_res["bypassed"] = bypass_gate
             run_record["gate"] = gate_res
 
-            if not gate_res["passed"]:
+            if gate_res.get("blocked") and not bypass_gate:
                 self._send_sse("stage", {"stage": "gate", "status": "rejected", "data": gate_res})
                 run_record["total_duration_ms"] = round((time.perf_counter() - t_start) * 1000)
                 log_path = save_run_log(run_record)
@@ -403,7 +405,8 @@ class AppHandler(BaseHTTPRequestHandler):
                 )
                 return
 
-            self._send_sse("stage", {"stage": "gate", "status": "done", "data": gate_res})
+            gate_status = "warning" if (gate_res.get("warning") or gate_res.get("blocked")) else "done"
+            self._send_sse("stage", {"stage": "gate", "status": gate_status, "data": gate_res})
 
             # --- STEP 3: GENERATE VERILOG + TESTBENCH (gemini-4-neon) ---
             self._send_sse("stage", {"stage": "generate", "status": "running", "model": MODELS["generate"]})
