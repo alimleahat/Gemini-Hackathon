@@ -270,18 +270,18 @@ class VirtualFPGABoard3D {
     this.renderer.domElement.style.height = "100%";
     this.container.appendChild(this.renderer.domElement);
 
-    // Environment reflections (metallic shields, IC pins, glossy display bezel)
+    // Environment reflections (subtle satin sheen on metal shields & pins)
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     this.envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
     this.scene.environment = this.envRT.texture;
-    this.scene.environmentIntensity = 0.55;
+    this.scene.environmentIntensity = 0.28;
     pmrem.dispose();
 
     // Studio lighting rig
-    const hemi = new THREE.HemisphereLight(0xdbeafe, 0x16241c, 0.55);
+    const hemi = new THREE.HemisphereLight(0xdbeafe, 0x16241c, 0.62);
     this.scene.add(hemi);
 
-    const keyLight = new THREE.DirectionalLight(0xfffaf0, 1.85);
+    const keyLight = new THREE.DirectionalLight(0xfffaf0, 1.35);
     keyLight.position.set(6.5, 13.0, 7.5);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.width = 2048;
@@ -345,9 +345,9 @@ class VirtualFPGABoard3D {
 
     this.bloomPass = new UnrealBloomPass(
       new THREE.Vector2(w, h),
-      0.58, // strength
+      0.56, // strength
       0.44, // radius
-      1.15  // threshold: strictly selective so only emissive LEDs & 7-seg digits bloom
+      1.25  // threshold: strictly selective so only emissive LEDs & 7-seg digits bloom
     );
     this.composer.addPass(this.bloomPass);
 
@@ -359,36 +359,36 @@ class VirtualFPGABoard3D {
     this.boardGroup = new THREE.Group();
     this.scene.add(this.boardGroup);
 
-    // Shared materials
+    // Shared materials (satin/matte realistic hardware finishes)
     this.matMetalSilver = new THREE.MeshStandardMaterial({
-      color: 0xc8d0d8,
-      metalness: 0.88,
-      roughness: 0.24,
+      color: 0xaeb6bf,
+      metalness: 0.58,
+      roughness: 0.52,
     });
     this.matMetalGold = new THREE.MeshStandardMaterial({
-      color: 0xd9a84e,
-      metalness: 0.92,
-      roughness: 0.22,
+      color: 0xc89b44,
+      metalness: 0.65,
+      roughness: 0.44,
     });
     this.matDarkPlastic = new THREE.MeshStandardMaterial({
       color: 0x1b1e24,
-      metalness: 0.08,
-      roughness: 0.52,
+      metalness: 0.05,
+      roughness: 0.64,
     });
     this.matCharcoal = new THREE.MeshStandardMaterial({
       color: 0x2a2f38,
-      metalness: 0.12,
-      roughness: 0.45,
+      metalness: 0.08,
+      roughness: 0.58,
     });
     this.matCeramicWhite = new THREE.MeshStandardMaterial({
-      color: 0xe6e8ec,
-      metalness: 0.05,
-      roughness: 0.4,
+      color: 0xdce0e5,
+      metalness: 0.04,
+      roughness: 0.55,
     });
     this.matCapTan = new THREE.MeshStandardMaterial({
       color: 0xb68a52,
-      metalness: 0.1,
-      roughness: 0.35,
+      metalness: 0.08,
+      roughness: 0.48,
     });
 
     this._buildPCB();
@@ -405,8 +405,8 @@ class VirtualFPGABoard3D {
 
     const pcbTopMat = new THREE.MeshStandardMaterial({
       map: fallbackTex,
-      roughness: 0.42,
-      metalness: 0.12,
+      roughness: 0.58,
+      metalness: 0.06,
     });
 
     // Load the Gemini-generated PCB surface texture
@@ -603,14 +603,14 @@ class VirtualFPGABoard3D {
     body.receiveShadow = true;
     group.add(body);
 
-    // Recessed glossy dark tinted face plate
+    // Recessed satin dark-tinted acrylic face plate
     const faceGeo = new THREE.PlaneGeometry(dispW - 0.14, dispD - 0.14);
     const faceMat = new THREE.MeshPhysicalMaterial({
       color: 0x0c0a0d,
-      roughness: 0.12,
-      metalness: 0.05,
-      clearcoat: 0.9,
-      clearcoatRoughness: 0.1,
+      roughness: 0.28,
+      metalness: 0.04,
+      clearcoat: 0.35,
+      clearcoatRoughness: 0.25,
     });
     const face = new THREE.Mesh(faceGeo, faceMat);
     face.rotation.x = -Math.PI / 2;
