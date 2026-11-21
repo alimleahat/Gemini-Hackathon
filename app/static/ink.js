@@ -65,6 +65,7 @@ window.FastInkEngine = (function () {
     let lastDrawTs = 0;
     let currentThreshold = threshold;
     let rotationDeg = 0; // 0, 90, 180, 270
+    let mirrorX = false;
     let fpsFrames = 0;
     let fpsWindowStart = performance.now();
     let hasCommittedAny = false;
@@ -87,7 +88,7 @@ window.FastInkEngine = (function () {
       outCtx.fillText("Clean digital ink canvas — starts with camera", INK_W / 2, INK_H / 2);
     }
 
-    // Draw rotated video frame onto frameCanvas (object-fit: cover style)
+    // Draw rotated + optionally mirrored video frame onto frameCanvas
     function drawRotatedVideo() {
       frameCtx.save();
       frameCtx.fillStyle = "#000";
@@ -95,6 +96,9 @@ window.FastInkEngine = (function () {
       frameCtx.translate(INK_W / 2, INK_H / 2);
       if (rotationDeg !== 0) {
         frameCtx.rotate((rotationDeg * Math.PI) / 180);
+      }
+      if (mirrorX) {
+        frameCtx.scale(-1, 1);
       }
       const swap = rotationDeg === 90 || rotationDeg === 270;
       const drawW = swap ? INK_H : INK_W;
@@ -399,6 +403,13 @@ window.FastInkEngine = (function () {
       },
       getRotation() {
         return rotationDeg;
+      },
+      setMirror(flag) {
+        mirrorX = Boolean(flag);
+        streak.fill(0);
+      },
+      getMirror() {
+        return mirrorX;
       },
       clear() {
         clearBuffers();

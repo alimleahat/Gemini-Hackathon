@@ -25,6 +25,8 @@ const state = {
   liveRecordedChunks: [],
   inkEngine: null,
   showFullRawCam: false,
+  camRotation: 0,    // 0, 90, 180, 270 (persisted in localStorage)
+  camMirror: false,  // horizontal mirror/flip (persisted in localStorage)
 
   // Saved Module Library (used by live frames + generation)
   savedModules: [],
@@ -229,16 +231,66 @@ function bindLiveCameraEvents() {
     $("ink-thresh-val").textContent = String(v);
     if (state.inkEngine) state.inkEngine.setThreshold(v);
   });
+const CAM_ORIENT_STORAGE_KEY = "fpga_cam_orientation_v1";
+
+function loadCameraOrientation() {
+  try {
+    const raw = localStorage.getItem(CAM_ORIENT_STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if ([0, 90, 180, 270].includes(Number(saved.rotation))) {
+      state.camRotation = Number(saved.rotation);
+    }
+    state.camMirror = Boolean(saved.mirror);
+  } catch (_) {}
+}
+
+function saveCameraOrientation() {
+  try {
+    localStorage.setItem(
+      CAM_ORIENT_STORAGE_KEY,
+      JSON.stringify({ rotation: state.camRotation, mirror: state.camMirror })
+    );
+  } catch (_) {}
+}
+
+function applyCameraOrientation(clearInk = false) {
+  if (state.inkEngine) {
+    state.inkEngine.setRotation(state.camRotation);
+    state.inkEngine.setMirror(state.camMirror);
+    if (clearInk) state.inkEngine.clear();
+  }
+  const transforms = [];
+  if (state.camRotation) transforms.push(`rotate(${state.camRotation}deg)`);
+  if (state.camMirror) transforms.push("scaleX(-1)");
+  const vid = $("live-video");
+  if (vid) vid.style.transform = transforms.join(" ");
+
+  const rotBtn = $("btn-rotate-ink");
+  if (rotBtn) rotBtn.textContent = `↻ ${state.camRotation}°`;
+
+  const flipBtn = $("btn-flip-ink");
+  if (flipBtn) {
+    flipBtn.classList.toggle("active", state.camMirror);
+    flipBtn.textContent = state.camMirror ? "⇄ Flipped" : "⇄ Flip";
+  }
+}
+
+  loadCameraOrientation();
+  applyCameraOrientation(false);
+
   $("btn-clear-ink")?.addEventListener("click", () => {
     if (state.inkEngine) state.inkEngine.clear();
   });
   $("btn-rotate-ink")?.addEventListener("click", () => {
-    if (!state.inkEngine) return;
-    const nextDeg = (state.inkEngine.getRotation() + 90) % 360;
-    state.inkEngine.setRotation(nextDeg);
-    state.inkEngine.clear();
-    $("btn-rotate-ink").textContent = `↻ ${nextDeg}°`;
-    $("live-video").style.transform = nextDeg ? `rotate(${nextDeg}deg)` : "";
+    state.camRotation = (state.camRotation + 90) % 360;
+    saveCameraOrientation();
+    applyCameraOrientation(true);
+  });
+  $("btn-flip-ink")?.addEventListener("click", () => {
+    state.camMirror = !state.camMirror;
+    saveCameraOrientation();
+    applyCameraOrientation(true);
   });
   const toggleRaw = () => {
     state.showFullRawCam = !state.showFullRawCam;
@@ -431,12 +483,27 @@ function captureCurrentLiveFrameB64() {
   if (!video || !video.videoWidth) return null;
   const canvas = $("capture-canvas");
   // Downscale slightly if huge so 1.5s frames upload & process fast
-  const maxW = 1024;
-  const scale = Math.min(1, maxW / video.videoWidth);
-  canvas.width = Math.round(video.videoWidth * scale);
-  canvas.height = Math.round(video.videoHeight * scale);
+  const maxDim = 1024;
+  const scale = Math.min(1, maxDim / Math.max(video.videoWidth, video.videoHeight));
+  const rawW = Math.round(video.videoWidth * scale);
+  const rawH = Math.round(video.videoHeight * scale);
+  const swap = state.camRotation === 90 || state.camRotation === 270;
+
+  canvas.width = swap ? rawH : rawW;
+  canvas.height = swap ? rawW : rawH;
+
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  if (state.camRotation) {
+    ctx.rotate((state.camRotation * Math.PI) / 180);
+  }
+  if (state.camMirror) {
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(video, -rawW / 2, -rawH / 2, rawW, rawH);
+  ctx.restore();
+
   const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
   return match ? { mimeType: match[1], b64: match[2] } : null;
