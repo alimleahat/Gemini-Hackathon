@@ -1,0 +1,15 @@
+# Environment variables & secrets
+.env
+.env.*
+
+# Python virtual environment & caches
+.venv/
+__pycache__/
+*.py[cod]
+
+# Icarus Verilog simulation artifacts
+*.vvp
+*.vcd
+
+# macOS
+.DS_Store
