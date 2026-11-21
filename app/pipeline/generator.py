@@ -54,15 +54,12 @@ class GeneratedDesign(BaseModel):
         description="Complete mapping between the circuit's logical signals and the virtual board pins."
     )
     verilog_code: str = Field(
-        description="Complete, self-contained, synthesizable Verilog-2005 code containing `module top(...)` and any helper submodules."
-    )
-    testbench_code: str = Field(
-        description="Complete, self-checking Verilog testbench `module tb;` that instantiates `top`, tests key cases, prints `PASS` on success or `FAIL: <reason>` on failure, and calls `$finish;`."
+        description="Complete, self-contained, synthesizable Verilog-2005 code containing `module top(...)` and any helper submodules. Do NOT include a testbench."
     )
 
 
 SYSTEM_INSTRUCTION = """You are an expert digital hardware and FPGA engineer.
-Your job is to inspect a hand-drawn circuit diagram (or text specification) and implement it in clean, synthesizable Verilog-2005 for a virtual FPGA board.
+Your job is to inspect a hand-drawn circuit diagram (or text specification) and implement ONLY the synthesizable Verilog-2005 hardware design for a virtual FPGA board. (A separate verification model will independently write the testbench.)
 
 MANDATORY TOP-LEVEL INTERFACE (exact module name and port names/widths):
 ```verilog
@@ -91,15 +88,8 @@ CRITICAL RULES FOR THE VIRTUAL BOARD:
 7. **Verilog-2005 & Yosys compatibility**:
    - Write standard synthesizable Verilog-2005 that compiles cleanly in BOTH `iverilog` AND `yosys synth_xilinx`.
    - Avoid SystemVerilog-only features like `logic`, `always_ff`, `always_comb`, `enum`, or unpacked array ports.
-   - In Icarus Verilog, `always @(*)` may not trigger at `t=0` for initialized registers until a signal changes; drive combinational outputs (like `seg`) with `assign` or give the combinational `reg` a matching default initializer, and assert synchronous reset (`btn[0]=1` for 1 clock edge) at the start of `tb.v`.
-   - Do NOT put `module tb` inside `verilog_code` — keep `verilog_code` strictly synthesizable hardware and put `module tb` only in `testbench_code`.
-8. **Self-checking testbench (`testbench_code`)**:
-   - Instantiate `top dut(.clk(clk), .sw(sw), .btn(btn), .led(led), .seg(seg), .an(an));`.
-   - Do NOT include `verilog_code` inside `testbench_code` (they are compiled together as separate files: `iverilog design.v tb.v`).
-   - Test all key input combinations or clock sequences thoroughly.
-   - Track an `integer errors = 0;` counter; on mismatch print `$display("FAIL: ..."); errors = errors + 1;`.
-   - At the end: if `errors == 0` print `$display("PASS");` else `$display("FAIL: %0d errors", errors);`, then call `$finish;`.
-   - Ensure the testbench ALWAYS terminates via `$finish;` within a few thousand time units (no infinite loops).
+   - In Icarus Verilog, `always @(*)` may not trigger at `t=0` for initialized registers until a signal changes; drive combinational outputs (like `seg`) with `assign` or give the combinational `reg` a matching default initializer.
+   - Do NOT include `module tb` or any testbench code inside `verilog_code` — return strictly synthesizable hardware.
 """
 
 
@@ -129,8 +119,8 @@ def run_generate(
         )
 
     prompt_lines = [
-        "Analyze this digital circuit and generate the complete Verilog implementation (`module top`), "
-        "a thorough self-checking testbench (`module tb`), and a clear virtual FPGA board pin mapping."
+        "Analyze this digital circuit and generate ONLY the synthesizable Verilog implementation (`module top` + helper circuit module) "
+        "and a clear virtual FPGA board pin mapping. Do NOT write a testbench."
     ]
     if circuit_type:
         prompt_lines.append(f"Detected circuit category: {circuit_type}.")
@@ -185,6 +175,5 @@ def run_generate(
         "recommended_clock_hz": max(1, min(15, design.recommended_clock_hz)),
         "pin_mapping": [item.model_dump() for item in design.pin_mapping],
         "verilog_code": design.verilog_code,
-        "testbench_code": design.testbench_code,
         "duration_ms": duration_ms,
     }

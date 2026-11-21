@@ -280,6 +280,7 @@ class LiveSessionManager:
         frame_entry: Dict[str, Any] = {
             "frame_index": frame_idx,
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "epoch_ms": round(time.time() * 1000),
             "frame_file": frame_rel,
             "gate": gate,
             "usable": gate["usable"],
@@ -332,6 +333,81 @@ class LiveSessionManager:
 
         return {"session_id": session_id, "video_file": filename, "bytes": len(video_bytes)}
 
+    def select_best_recent_frame(
+        self,
+        session_id: str,
+        window_sec: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Pick the highest-scoring frame from the last ~5 seconds by gemini-decision-1."""
+        win_sec = float(window_sec if window_sec is not None else LIVE_CONFIG.get("best_frame_window_sec", 5.0))
+        session_dir = RUNS_DIR / session_id
+        with self._lock:
+            record = self._sessions.get(session_id)
+            if record is None:
+                sess_path = session_dir / "session.json"
+                if sess_path.exists():
+                    record = json.loads(sess_path.read_text(encoding="utf-8"))
+                    self._sessions[session_id] = record
+                else:
+                    return {"found": False, "reason": "No recorded live frames in session."}
+            frames = list(record.get("frames") or [])
+
+        if not frames:
+            return {"found": False, "reason": "No frames captured yet."}
+
+        # Reference time = most recent frame's epoch_ms (or now)
+        ref_ms = max((f.get("epoch_ms") or 0) for f in frames) or round(time.time() * 1000)
+        cutoff_ms = ref_ms - int(win_sec * 1000)
+
+        recent = [f for f in frames if (f.get("epoch_ms") or ref_ms) >= cutoff_ms and f.get("frame_file")]
+        pool = recent if recent else [f for f in frames if f.get("frame_file")]
+        if not pool:
+            return {"found": False, "reason": "No saved frame image files found."}
+
+        # Prefer highest gemini-decision-1 usable_prob, breaking ties by confidence then most recent
+        best = max(
+            pool,
+            key=lambda f: (
+                float((f.get("gate") or {}).get("usable_prob", 0.0)),
+                float((f.get("gate") or {}).get("confidence", 0.0)),
+                int(f.get("frame_index", 0)),
+            ),
+        )
+
+        img_path = session_dir / best["frame_file"]
+        if not img_path.exists():
+            return {"found": False, "reason": f"Frame file missing: {best['frame_file']}"}
+
+        image_b64 = base64.b64encode(img_path.read_bytes()).decode("ascii")
+        best_gate = best.get("gate") or {}
+        best_schematic = (best.get("reader") or {}).get("schematic")
+
+        # If the sharpest frame happened to be below threshold or had no reader run,
+        # fall back to the latest extracted schematic for layout context
+        with self._lock:
+            if not best_schematic and record:
+                best_schematic = record.get("latest_schematic")
+            chosen_meta = {
+                "frame_index": best["frame_index"],
+                "frame_file": best["frame_file"],
+                "usable_prob": best_gate.get("usable_prob", 0.0),
+                "confidence": best_gate.get("confidence", 0.0),
+                "window_sec": win_sec,
+                "window_candidates": len(recent),
+                "total_frames": len(frames),
+            }
+            if record is not None:
+                record["chosen_frame"] = chosen_meta
+                self._write_session(session_dir, record)
+
+        return {
+            "found": True,
+            **chosen_meta,
+            "image_b64": image_b64,
+            "mime_type": "image/jpeg",
+            "schematic": best_schematic,
+        }
+
     def finish_session(self, session_id: str) -> Dict[str, Any]:
         session_dir = RUNS_DIR / session_id
         with self._lock:
@@ -353,6 +429,30 @@ class LiveSessionManager:
     def _write_session(session_dir: Path, record: Dict[str, Any]) -> None:
         (session_dir / "session.json").write_text(
             json.dumps(record, indent=2),
+            encoding="utf-8",
+        )
+        # Also write a clean per-frame Decision 1 scores log for evaluation
+        scores_payload = {
+            "session_id": record.get("session_id"),
+            "model": MODELS["gate"],
+            "chosen_frame": record.get("chosen_frame"),
+            "frames": [
+                {
+                    "frame_index": f.get("frame_index"),
+                    "timestamp": f.get("timestamp"),
+                    "epoch_ms": f.get("epoch_ms"),
+                    "frame_file": f.get("frame_file"),
+                    "usable": f.get("usable"),
+                    "usable_prob": (f.get("gate") or {}).get("usable_prob"),
+                    "confidence": (f.get("gate") or {}).get("confidence"),
+                    "duration_ms": (f.get("gate") or {}).get("duration_ms"),
+                    "reason": (f.get("gate") or {}).get("reason"),
+                }
+                for f in (record.get("frames") or [])
+            ],
+        }
+        (session_dir / "decision1_scores.json").write_text(
+            json.dumps(scores_payload, indent=2),
             encoding="utf-8",
         )
 

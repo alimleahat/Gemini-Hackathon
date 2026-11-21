@@ -7,14 +7,100 @@ Verifies two things:
    (`PASS` printed, no `FAIL`, clean exit).
 """
 
+import json
 import os
 import re
 import subprocess
 import tempfile
 import time
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
+from pydantic import BaseModel, Field
 
-from app.config import TEST_CONFIG
+from app.config import MODELS, TEST_CONFIG
+from app.pipeline.client import get_client
+
+
+class IndependentTestbench(BaseModel):
+    test_plan: str = Field(
+        description="1-2 sentence summary of what behaviors and edge cases this independent testbench checks."
+    )
+    testbench_code: str = Field(
+        description="Complete self-checking Verilog-2005 testbench `module tb;` that instantiates `top`, prints `PASS` or `FAIL: <reason>`, and calls `$finish;`."
+    )
+
+
+TB_SYSTEM_INSTRUCTION = """You are an independent digital hardware verification engineer.
+You are given ONLY the user's circuit drawing/description and the virtual FPGA board pin mapping — you NEVER see the RTL implementation.
+
+Write a thorough, self-checking Verilog-2005 testbench (`module tb;`) that compiles cleanly with `iverilog -g2012` and runs in `vvp`:
+1. Instantiate the DUT with the exact fixed virtual board ports:
+   `top dut(.clk(clk), .sw(sw), .btn(btn), .led(led), .seg(seg), .an(an));`
+2. Do NOT define `module top` inside `testbench_code` (it is compiled alongside `design.v`).
+3. Use standard Verilog-2005 constructs supported by Icarus Verilog (no `assert property`, no classes, no queues).
+4. For sequential/clocked circuits: assert reset (`btn[0] = 1`) for 1-2 clock edges at the start, then release reset and verify the expected state transitions.
+5. Verify the mapped LEDs (`led[...]`) and/or active-low 7-segment display (`seg[6:0]`, `an[3:0]`) against the expected behavior from the drawing/spec.
+6. Track `integer errors = 0;`. On any mismatch print `$display("FAIL: <reason>"); errors = errors + 1;`.
+7. At the end: if `errors == 0` print `$display("PASS");` else `$display("FAIL: %0d errors", errors);`, and ALWAYS call `$finish;` within a few thousand time units.
+"""
+
+
+def generate_independent_testbench(
+    *,
+    image_b64: Optional[str] = None,
+    mime_type: Optional[str] = None,
+    text_prompt: Optional[str] = None,
+    circuit_type: Optional[str] = None,
+    circuit_name: Optional[str] = None,
+    design_summary: Optional[str] = None,
+    pin_mapping: Optional[List[Dict[str, Any]]] = None,
+    schematic_json: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Use gemini-4-hydrogen to write an independent testbench WITHOUT seeing Neon's Verilog."""
+    t0 = time.perf_counter()
+    client = get_client()
+
+    input_blocks = []
+    if image_b64:
+        input_blocks.append(
+            {"type": "image", "data": image_b64, "mime_type": mime_type or "image/jpeg"}
+        )
+
+    lines = [
+        "Write an independent self-checking Verilog testbench (`module tb;`) for this circuit."
+    ]
+    if circuit_name:
+        lines.append(f"Circuit name: {circuit_name}")
+    if circuit_type:
+        lines.append(f"Circuit type: {circuit_type}")
+    if design_summary:
+        lines.append(f"Expected behavior summary: {design_summary}")
+    if text_prompt and text_prompt.strip():
+        lines.append(f"User description / notes: {text_prompt.strip()}")
+    if pin_mapping:
+        lines.append("Virtual FPGA board pin mapping (drive inputs and check outputs on these exact pins):")
+        lines.append(json.dumps(pin_mapping, indent=2))
+    if schematic_json:
+        lines.append("Extracted schematic JSON:\n" + json.dumps(schematic_json, indent=2))
+
+    input_blocks.append({"type": "text", "text": "\n\n".join(lines)})
+
+    interaction = client.interactions.create(
+        model=MODELS["testbench"],
+        system_instruction=TB_SYSTEM_INSTRUCTION,
+        input=input_blocks,
+        response_format={
+            "type": "text",
+            "mime_type": "application/json",
+            "schema": IndependentTestbench.model_json_schema(),
+        },
+    )
+    parsed = IndependentTestbench.model_validate_json(interaction.output_text)
+    return {
+        "model": MODELS["testbench"],
+        "test_plan": parsed.test_plan,
+        "testbench_code": parsed.testbench_code,
+        "duration_ms": round((time.perf_counter() - t0) * 1000),
+    }
 
 PORT_CHECK_HARNESS = """
 module __board_port_check;

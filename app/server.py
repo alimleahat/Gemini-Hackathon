@@ -46,7 +46,7 @@ from app.pipeline.logger import (
 )
 from app.pipeline.modules import module_library
 from app.pipeline.synthesizer import run_synthesis
-from app.pipeline.tester import run_test
+from app.pipeline.tester import generate_independent_testbench, run_test
 from app.pipeline.vivado_export import build_vivado_zip
 
 
@@ -149,6 +149,9 @@ class AppHandler(BaseHTTPRequestHandler):
         if path == "/api/live/finish":
             self._handle_live_finish()
             return
+        if path == "/api/live/select_best":
+            self._handle_live_select_best()
+            return
         if path == "/api/modules/save":
             self._handle_module_save()
             return
@@ -215,6 +218,19 @@ class AppHandler(BaseHTTPRequestHandler):
             body = self._read_json_body()
             session_id = str(body.get("session_id", ""))
             res = live_session_manager.finish_session(session_id)
+            self._send_json(res)
+        except Exception as e:
+            self._send_json({"error": str(e)}, status=500)
+
+    def _handle_live_select_best(self) -> None:
+        try:
+            body = self._read_json_body()
+            session_id = str(body.get("session_id", ""))
+            window_sec = body.get("window_sec")
+            res = live_session_manager.select_best_recent_frame(
+                session_id=session_id,
+                window_sec=float(window_sec) if window_sec is not None else None,
+            )
             self._send_json(res)
         except Exception as e:
             self._send_json({"error": str(e)}, status=500)
@@ -303,6 +319,7 @@ class AppHandler(BaseHTTPRequestHandler):
         text_prompt = (body.get("text_prompt") or "").strip() or None
         schematic_json = body.get("schematic_json") or None
         live_session_id = body.get("live_session_id") or None
+        chosen_frame = body.get("chosen_frame") or None
         saved_modules = module_library.list_modules() or None
         baseline_mode = bool(body.get("baseline_mode", False))
         enable_improve = bool(body.get("enable_improve", True)) and not baseline_mode
@@ -344,6 +361,7 @@ class AppHandler(BaseHTTPRequestHandler):
                 "mime_type": mime_type if image_b64 else None,
                 "text_prompt": text_prompt,
                 "live_session_id": live_session_id,
+                "chosen_frame": chosen_frame,
                 "schematic_json": schematic_json,
             },
             "gate": None,
@@ -397,14 +415,45 @@ class AppHandler(BaseHTTPRequestHandler):
             run_record["generate"] = gen_res
             self._send_sse("stage", {"stage": "generate", "status": "done", "data": gen_res})
 
-            # --- STEP 4: TEST WITH ICARUS VERILOG ---
-            self._send_sse("stage", {"stage": "test", "status": "running"})
-            test_res = run_test(gen_res["verilog_code"], gen_res["testbench_code"])
+            # --- STEP 4: INDEPENDENT TESTBENCH (gemini-4-hydrogen) + ICARUS VERILOG ---
+            self._send_sse(
+                "stage",
+                {
+                    "stage": "test",
+                    "status": "running",
+                    "substage": "generating_tb",
+                    "model": MODELS["testbench"],
+                },
+            )
+            tb_res = generate_independent_testbench(
+                image_b64=image_b64,
+                mime_type=mime_type,
+                text_prompt=text_prompt,
+                circuit_type=gate_res.get("circuit_type_label"),
+                circuit_name=gen_res.get("circuit_name"),
+                design_summary=gen_res.get("design_summary"),
+                pin_mapping=gen_res.get("pin_mapping"),
+                schematic_json=schematic_json,
+            )
+            self._send_sse(
+                "stage",
+                {
+                    "stage": "test",
+                    "status": "running",
+                    "substage": "simulating",
+                    "model": MODELS["testbench"],
+                },
+            )
+            test_res = run_test(gen_res["verilog_code"], tb_res["testbench_code"])
+            test_res["tb_model"] = tb_res["model"]
+            test_res["tb_plan"] = tb_res["test_plan"]
+            test_res["tb_duration_ms"] = tb_res["duration_ms"]
+            test_res["testbench_code"] = tb_res["testbench_code"]
             run_record["initial_test"] = test_res
             self._send_sse("stage", {"stage": "test", "status": "done", "data": test_res})
 
             final_verilog = gen_res["verilog_code"]
-            final_testbench = gen_res["testbench_code"]
+            final_testbench = tb_res["testbench_code"]
             final_test = test_res
 
             # --- STEP 5: IMPROVE LOOP (gemini-4-hydrogen, swappable) ---

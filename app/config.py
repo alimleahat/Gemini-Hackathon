@@ -18,7 +18,8 @@ STATIC_DIR = APP_DIR / "static"
 MODELS = {
     "gate": "gemini-decision-1",        # Step 2 & Live frame usability: Decisions API (v1beta)
     "live_reader": "gemini-4-hydrogen", # Live Camera mode: fast structured schematic extraction
-    "generate": "gemini-4-neon",        # Step 3 & issue explanations: Verilog + testbench generation
+    "generate": "gemini-4-neon",        # Step 3 & issue explanations: Verilog design generation ONLY
+    "testbench": "gemini-4-hydrogen",   # Step 4: Independent testbench generation (never sees Neon's code)
     "improve": "gemini-4-hydrogen",     # Step 5: Iterative fix / optimization loop
 }
 
@@ -26,6 +27,7 @@ MODELS = {
 LIVE_CONFIG = {
     "frame_interval_ms": 1500,          # Grab a frame every ~1.5 seconds
     "min_usable_prob": 0.55,            # Minimum P(usable) from gemini-decision-1 to keep frame
+    "best_frame_window_sec": 5.0,       # Pick highest-scoring frame from last ~5s on Done
 }
 
 # Step 2 (Decision Gate) thresholds

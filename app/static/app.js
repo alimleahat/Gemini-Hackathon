@@ -80,6 +80,9 @@ async function init() {
         if (cfg.models.live_reader) {
           $("live-reader-pill").textContent = cfg.models.live_reader;
         }
+        if (cfg.models.testbench) {
+          $("tag-model-testbench").textContent = `${cfg.models.testbench} + iverilog`;
+        }
       }
       if (cfg.live?.frame_interval_ms) {
         state.liveIntervalMs = cfg.live.frame_interval_ms;
@@ -484,22 +487,57 @@ async function grabAndSendLiveFrame() {
 }
 
 async function finishLiveAndBuild() {
-  // Capture one crisp final frame if camera is still open and we don't have one yet
-  const fresh = captureCurrentLiveFrameB64();
-  const finalB64 = fresh?.b64 || state.liveLastImageB64;
-  if (!finalB64) {
+  pauseLiveMirror();
+  const activeSessionId = state.liveSessionId;
+
+  // Choose the highest-scoring frame from the last ~5 seconds by gemini-decision-1
+  let chosenB64 = null;
+  let chosenSchematic = state.liveSchematic;
+  let chosenFrameMeta = null;
+
+  if (activeSessionId) {
+    try {
+      const selRes = await fetch("/api/live/select_best", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: activeSessionId, window_sec: 5.0 }),
+      });
+      if (selRes.ok) {
+        const sel = await selRes.json();
+        if (sel.found && sel.image_b64) {
+          chosenB64 = sel.image_b64;
+          if (sel.schematic) chosenSchematic = sel.schematic;
+          chosenFrameMeta = {
+            frame_index: sel.frame_index,
+            frame_file: sel.frame_file,
+            usable_prob: sel.usable_prob,
+            confidence: sel.confidence,
+            window_sec: sel.window_sec,
+            window_candidates: sel.window_candidates,
+            total_frames: sel.total_frames,
+          };
+          showChosenFrameBanner(chosenFrameMeta, chosenB64);
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Fallback only if no recorded frame existed yet
+  if (!chosenB64) {
+    const fresh = captureCurrentLiveFrameB64();
+    chosenB64 = fresh?.b64 || state.liveLastImageB64;
+  }
+  if (!chosenB64) {
     alert("No camera frame captured yet. Start Live Mirror and show your circuit first.");
     return;
   }
 
-  pauseLiveMirror();
   await stopAndUploadRecording();
-  const finishedSessionId = state.liveSessionId;
-  if (finishedSessionId) {
+  if (activeSessionId) {
     fetch("/api/live/finish", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id: finishedSessionId }),
+      body: JSON.stringify({ session_id: activeSessionId }),
     }).catch(() => {});
   }
   stopLiveVideoStream();
@@ -509,12 +547,30 @@ async function finishLiveAndBuild() {
 
   const note = $("live-note").value.trim();
   await startPipeline({
-    image_b64: finalB64,
+    image_b64: chosenB64,
     mime_type: "image/jpeg",
     text_prompt: note || undefined,
-    schematic_json: state.liveSchematic || undefined,
-    live_session_id: finishedSessionId || undefined,
+    schematic_json: chosenSchematic || undefined,
+    live_session_id: activeSessionId || undefined,
+    chosen_frame: chosenFrameMeta || undefined,
   });
+}
+
+function showChosenFrameBanner(meta, imageB64) {
+  const banner = $("live-chosen-frame-banner");
+  if (!banner) return;
+  const usablePct = Math.round((meta.usable_prob || 0) * 100);
+  const confPct = Math.round((meta.confidence || 0) * 100);
+  banner.classList.remove("hidden");
+  banner.innerHTML = `
+    <img class="chosen-frame-thumb" src="data:image/jpeg;base64,${imageB64}" alt="Chosen best frame" />
+    <div>
+      <div><strong>Best Frame Selected: Frame #${meta.frame_index}</strong> (from ${meta.window_candidates} frame${meta.window_candidates === 1 ? "" : "s"} in last ${meta.window_sec}s)</div>
+      <div class="muted" style="font-size:0.84rem">
+        Decision 1 score: <strong style="color:#4ade80">${usablePct}% usable</strong> • Confidence: <strong style="color:var(--accent)">${confPct}%</strong>
+      </div>
+    </div>
+  `;
 }
 
 function loadImageFile(file) {
@@ -748,7 +804,7 @@ function handleSSEEvent(eventName, payload) {
 
   if (stage === "gate") renderGateStage(status, data);
   else if (stage === "generate") renderGenerateStage(status, data);
-  else if (stage === "test") renderTestStage(status, data);
+  else if (stage === "test") renderTestStage(status, data, payload.substage);
   else if (stage === "improve") renderImproveStage(status, data);
   else if (stage === "lint") renderLintStage(status, data);
   else if (stage === "synthesis") renderSynthesisStage(status, data);
@@ -808,39 +864,42 @@ function renderGateStage(status, data) {
 
 function renderGenerateStage(status, data) {
   if (status === "running") {
-    setCardStatus("generate", "running", "Generating Verilog...");
-    $("body-generate").innerHTML = `<p class="muted">Reading diagram, mapping virtual board pins, and writing synthesizable Verilog + testbench...</p>`;
+    setCardStatus("generate", "running", "Generating Design...");
+    $("body-generate").innerHTML = `<p class="muted">Reading diagram, mapping virtual board pins, and writing synthesizable Verilog design (design.v only)...</p>`;
     return;
   }
 
   setCardStatus("generate", "done", `Done (${(data.duration_ms / 1000).toFixed(1)}s)`);
   state.latestVerilog = data.verilog_code;
-  state.latestTestbench = data.testbench_code;
   state.latestCircuitName = data.circuit_name;
   $("btn-export-vivado").disabled = false;
   $("body-generate").innerHTML = `
     <h3 style="margin:0 0 6px;font-size:1.15rem">${escapeHtml(data.circuit_name)}</h3>
     <p class="muted" style="margin-bottom:10px">${escapeHtml(data.design_summary)}</p>
     <details class="code-details">
-      <summary>View Verilog Design (design.v)</summary>
+      <summary>View Verilog Design (design.v — gemini-4-neon)</summary>
       <pre id="code-verilog">${escapeHtml(data.verilog_code)}</pre>
-    </details>
-    <details class="code-details">
-      <summary>View Self-Checking Testbench (tb.v)</summary>
-      <pre id="code-tb">${escapeHtml(data.testbench_code)}</pre>
     </details>
   `;
   renderPinMapping(data.pin_mapping || []);
 }
 
-function renderTestStage(status, data) {
+function renderTestStage(status, data, substage) {
   if (status === "running") {
-    setCardStatus("test", "running", "Compiling & Simulating...");
-    $("body-test").innerHTML = `<p class="muted">Running Icarus Verilog (iverilog + vvp)...</p>`;
+    if (substage === "generating_tb") {
+      setCardStatus("test", "running", "Writing Testbench...");
+      $("body-test").innerHTML = `<p class="muted"><strong>gemini-4-hydrogen</strong> is writing an independent testbench from the drawing &amp; pin mapping (without seeing Neon's Verilog)...</p>`;
+    } else {
+      setCardStatus("test", "running", "Simulating...");
+      $("body-test").innerHTML = `<p class="muted">Compiling and simulating Neon's design against Hydrogen's independent testbench with Icarus Verilog...</p>`;
+    }
     return;
   }
 
   const ok = !!data.passed;
+  if (data.testbench_code) {
+    state.latestTestbench = data.testbench_code;
+  }
   setCardStatus("test", ok ? "done" : "error", ok ? "PASS" : "FAIL");
   const logOutput = [data.stdout, data.stderr].filter(Boolean).join("\n\n") || "(no output)";
 
@@ -860,6 +919,12 @@ function renderTestStage(status, data) {
       </div>
     </div>
     <p class="muted">${escapeHtml(data.summary)}</p>
+    ${data.tb_plan ? `<p class="muted" style="margin-top:6px;font-size:0.86rem"><strong>Independent Test Plan (${escapeHtml(data.tb_model || "gemini-4-hydrogen")}):</strong> ${escapeHtml(data.tb_plan)}</p>` : ""}
+    ${data.testbench_code ? `
+    <details class="code-details">
+      <summary>View Independent Testbench (tb.v — ${escapeHtml(data.tb_model || "gemini-4-hydrogen")})</summary>
+      <pre id="code-tb">${escapeHtml(data.testbench_code)}</pre>
+    </details>` : ""}
     <details class="code-details" ${ok ? "" : "open"}>
       <summary>Compiler &amp; Simulation Output</summary>
       <pre>${escapeHtml(logOutput)}</pre>
