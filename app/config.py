@@ -16,15 +16,22 @@ STATIC_DIR = APP_DIR / "static"
 
 # Model IDs (single source of truth)
 MODELS = {
-    "gate": "gemini-decision-1",       # Step 2: Decisions API (v1beta)
-    "generate": "gemini-4-neon",       # Step 3: Multimodal Verilog + testbench generation
-    "improve": "gemini-4-hydrogen",    # Step 5: Iterative fix / optimization loop
+    "gate": "gemini-decision-1",        # Step 2 & Live frame usability: Decisions API (v1beta)
+    "live_reader": "gemini-4-hydrogen", # Live Camera mode: fast structured schematic extraction
+    "generate": "gemini-4-neon",        # Step 3 & issue explanations: Verilog + testbench generation
+    "improve": "gemini-4-hydrogen",     # Step 5: Iterative fix / optimization loop
+}
+
+# Live Camera Mirroring settings
+LIVE_CONFIG = {
+    "frame_interval_ms": 1500,          # Grab a frame every ~1.5 seconds
+    "min_usable_prob": 0.55,            # Minimum P(usable) from gemini-decision-1 to keep frame
 }
 
 # Step 2 (Decision Gate) thresholds
 GATE_CONFIG = {
-    "min_readable_prob": 0.60,         # Minimum P(yes) to accept input as a readable circuit
-    "min_confidence": 0.60,            # Minimum Decision 1 confidence to proceed
+    "min_readable_prob": 0.60,          # Minimum P(yes) to accept input as a readable circuit
+    "min_confidence": 0.60,             # Minimum Decision 1 confidence to proceed
 }
 
 # Step 4 (Icarus Verilog simulation)
@@ -36,7 +43,7 @@ TEST_CONFIG = {
 # Step 5 (Improve loop)
 IMPROVE_CONFIG = {
     "max_rounds": 5,
-    "mode": "fix_errors",              # Swappable: "fix_errors" (can later add "optimize_area" / "both")
+    "mode": "fix_errors",               # Swappable: "fix_errors" (can later add "optimize_area" / "both")
 }
 
 # Step 6 (Yosys synthesis)

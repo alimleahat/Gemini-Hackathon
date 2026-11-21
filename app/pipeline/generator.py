@@ -109,8 +109,12 @@ def run_generate(
     mime_type: Optional[str] = None,
     text_prompt: Optional[str] = None,
     circuit_type: Optional[str] = None,
+    schematic_json: Optional[Dict[str, Any]] = None,
+    saved_modules: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Generate top-level Verilog, testbench, and pin mapping from image/text."""
+    import json as _json
+
     t0 = time.perf_counter()
     client = get_client()
 
@@ -132,6 +136,26 @@ def run_generate(
         prompt_lines.append(f"Detected circuit category: {circuit_type}.")
     if text_prompt and text_prompt.strip():
         prompt_lines.append(f"User description / notes: {text_prompt.strip()}")
+    if schematic_json:
+        prompt_lines.append(
+            "Structured schematic extracted during live camera mirroring (use this alongside the image):\n"
+            + _json.dumps(schematic_json, indent=2)
+        )
+    if saved_modules:
+        mod_sections = [
+            "SAVED MODULE LIBRARY (if the diagram instantiates any of these modules by name, "
+            "instantiate them inside `module top` AND include their module definitions verbatim in `verilog_code` "
+            "so `design.v` compiles cleanly on its own):"
+        ]
+        for m in saved_modules:
+            ins = ", ".join(p["name"] for p in m.get("inputs", []))
+            outs = ", ".join(p["name"] for p in m.get("outputs", []))
+            mod_sections.append(
+                f"### Module `{m['verilog_module_name']}` (display name: `{m['name']}`, inputs: [{ins}], outputs: [{outs}])\n"
+                f"```verilog\n{m.get('verilog_code', '')}\n```"
+            )
+        prompt_lines.append("\n\n".join(mod_sections))
+
     prompt_lines.append(
         "Remember: keep `module top` strictly matching `(clk, sw[15:0], btn[4:0], led[15:0], seg[6:0], an[3:0])`, "
         "no 100MHz clock dividers, initialize registers to 0, and write standard Verilog-2005."

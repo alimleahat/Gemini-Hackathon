@@ -4,11 +4,28 @@
  */
 
 const state = {
-  inputMode: "photo", // "photo" | "text"
+  inputMode: "live", // "live" | "photo" | "text"
   imageB64: null,
   mimeType: "image/jpeg",
   cameraStream: null,
   running: false,
+
+  // Live Camera Mirroring state
+  liveStream: null,
+  liveMirroring: false,
+  liveSessionId: null,
+  liveIntervalMs: 1500,
+  liveLoopTimer: null,
+  liveFrameInFlight: false,
+  liveFrameCount: 0,
+  liveUsableCount: 0,
+  liveLastImageB64: null,
+  liveSchematic: null,
+  liveRecorder: null,
+  liveRecordedChunks: [],
+
+  // Saved Module Library (used by live frames + generation)
+  savedModules: [],
 
   // Virtual FPGA Board state
   boardSessionId: null,
@@ -30,11 +47,19 @@ const $ = (id) => document.getElementById(id);
 async function init() {
   buildVirtualBoardDOM();
   bindInputEvents();
+  bindLiveCameraEvents();
   bindToggleEvents();
   bindBoardEvents();
   bindHistoryModal();
 
-  // Fetch active model IDs from single config file on backend
+  // Render empty placeholder digital schematic
+  if (window.SchematicRenderer) {
+    window.SchematicRenderer.render($("live-schematic-canvas"), null);
+  }
+  syncRunBarVisibility();
+  populateCameraList(false);
+
+  // Fetch active model IDs & live interval from single config file on backend
   try {
     const res = await fetch("/api/config");
     if (res.ok) {
@@ -43,6 +68,12 @@ async function init() {
         $("tag-model-gate").textContent = cfg.models.gate;
         $("tag-model-generate").textContent = cfg.models.generate;
         $("tag-model-improve").textContent = cfg.models.improve;
+        if (cfg.models.live_reader) {
+          $("live-reader-pill").textContent = cfg.models.live_reader;
+        }
+      }
+      if (cfg.live?.frame_interval_ms) {
+        state.liveIntervalMs = cfg.live.frame_interval_ms;
       }
     }
   } catch (_) {}
@@ -111,16 +142,25 @@ function buildVirtualBoardDOM() {
   }
 }
 
-// --- Input Events (Upload, Drag-Drop, Camera, Text) ---
+// --- Input Events (Live Camera, Upload, Drag-Drop, Camera, Text) ---
+function syncRunBarVisibility() {
+  const backupBar = $("backup-run-bar");
+  if (backupBar) {
+    backupBar.classList.toggle("hidden", state.inputMode === "live");
+  }
+}
+
 function bindInputEvents() {
   document.querySelectorAll(".tab-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const tab = btn.dataset.tab;
       state.inputMode = tab;
       document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      $("panel-live").classList.toggle("active", tab === "live");
       $("panel-photo").classList.toggle("active", tab === "photo");
       $("panel-text").classList.toggle("active", tab === "text");
       if (tab !== "photo") stopCamera();
+      syncRunBarVisibility();
     });
   });
 
@@ -150,7 +190,296 @@ function bindInputEvents() {
   $("btn-capture").addEventListener("click", captureCameraFrame);
   $("btn-clear-image").addEventListener("click", clearImage);
 
-  $("btn-run").addEventListener("click", startPipeline);
+  $("btn-run").addEventListener("click", () => startPipeline());
+}
+
+// --- Live Camera Mirroring (Continuity Camera / Webcam) ---
+function bindLiveCameraEvents() {
+  $("btn-refresh-cameras").addEventListener("click", () => populateCameraList(true));
+  $("camera-select").addEventListener("change", async () => {
+    if (state.liveMirroring) {
+      await openLiveVideoStream($("camera-select").value);
+    }
+  });
+  $("btn-live-toggle").addEventListener("click", () => {
+    if (state.liveMirroring) pauseLiveMirror();
+    else startLiveMirror();
+  });
+  $("btn-live-done").addEventListener("click", finishLiveAndBuild);
+}
+
+async function populateCameraList(requestPermFirst = false) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+  const select = $("camera-select");
+  const prevVal = select.value;
+
+  if (requestPermFirst) {
+    try {
+      const tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      tmp.getTracks().forEach((t) => t.stop());
+    } catch (_) {}
+  }
+
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter((d) => d.kind === "videoinput");
+    select.innerHTML = "";
+    if (!cams.length) {
+      select.innerHTML = `<option value="">No cameras detected</option>`;
+      return;
+    }
+    cams.forEach((cam, idx) => {
+      const opt = document.createElement("option");
+      opt.value = cam.deviceId;
+      opt.textContent = cam.label || `Camera ${idx + 1}`;
+      select.appendChild(opt);
+    });
+    if (prevVal && cams.some((c) => c.deviceId === prevVal)) {
+      select.value = prevVal;
+    } else {
+      // Prefer iPhone / Continuity Camera automatically if present
+      const iphone = cams.find((c) => /iphone|continuity/i.test(c.label || ""));
+      if (iphone) select.value = iphone.deviceId;
+    }
+  } catch (_) {}
+}
+
+async function openLiveVideoStream(deviceId) {
+  stopLiveVideoStream();
+  const constraints = {
+    video: deviceId
+      ? { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      : { width: { ideal: 1280 }, height: { ideal: 720 } },
+    audio: false,
+  };
+  const stream = await navigator.mediaDevices.getUserMedia(constraints);
+  state.liveStream = stream;
+  const video = $("live-video");
+  video.srcObject = stream;
+  await video.play();
+  $("live-video-placeholder").classList.add("hidden");
+
+  // Refresh camera list now that permission is granted so real labels (e.g. iPhone) appear
+  await populateCameraList(false);
+  const activeTrack = stream.getVideoTracks()[0];
+  const activeId = activeTrack?.getSettings?.().deviceId;
+  if (activeId) $("camera-select").value = activeId;
+  return activeTrack?.label || "";
+}
+
+function stopLiveVideoStream() {
+  if (state.liveStream) {
+    state.liveStream.getTracks().forEach((t) => t.stop());
+    state.liveStream = null;
+  }
+}
+
+function startMediaRecording() {
+  if (!state.liveStream || typeof MediaRecorder === "undefined") return;
+  state.liveRecordedChunks = [];
+  const mimeCandidates = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
+  const chosenMime = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) || "";
+  try {
+    const rec = chosenMime
+      ? new MediaRecorder(state.liveStream, { mimeType: chosenMime })
+      : new MediaRecorder(state.liveStream);
+    rec.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) state.liveRecordedChunks.push(e.data);
+    };
+    rec.start(1000);
+    state.liveRecorder = rec;
+    $("live-rec-badge").classList.remove("hidden");
+  } catch (_) {
+    state.liveRecorder = null;
+  }
+}
+
+async function stopAndUploadRecording() {
+  $("live-rec-badge").classList.add("hidden");
+  const rec = state.liveRecorder;
+  const sessionId = state.liveSessionId;
+  state.liveRecorder = null;
+  if (!rec || !sessionId) return;
+
+  await new Promise((resolve) => {
+    rec.onstop = resolve;
+    try {
+      if (rec.state !== "inactive") rec.stop();
+      else resolve();
+    } catch (_) {
+      resolve();
+    }
+  });
+
+  if (!state.liveRecordedChunks.length) return;
+  const mime = rec.mimeType || "video/webm";
+  const blob = new Blob(state.liveRecordedChunks, { type: mime });
+  state.liveRecordedChunks = [];
+  try {
+    await fetch(`/api/live/video?session_id=${encodeURIComponent(sessionId)}`, {
+      method: "POST",
+      headers: { "Content-Type": mime },
+      body: blob,
+    });
+  } catch (_) {}
+}
+
+async function startLiveMirror() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert("Camera API is not available in this browser.");
+    return;
+  }
+  try {
+    const camLabel = await openLiveVideoStream($("camera-select").value);
+    if (!state.liveSessionId) {
+      const res = await fetch("/api/live/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ camera_label: camLabel }),
+      });
+      const data = await res.json();
+      state.liveSessionId = data.session_id;
+      state.liveFrameCount = 0;
+      state.liveUsableCount = 0;
+      startMediaRecording();
+    }
+
+    state.liveMirroring = true;
+    $("btn-live-toggle").textContent = "⏸ Pause Mirror";
+    $("btn-live-done").disabled = false;
+    $("live-status-text").textContent = "Live mirroring active — grabbing a frame every 1.5s...";
+    setStepper("input", "running");
+
+    // Grab first frame immediately, then every ~1.5s
+    grabAndSendLiveFrame();
+    state.liveLoopTimer = setInterval(grabAndSendLiveFrame, state.liveIntervalMs);
+  } catch (err) {
+    alert("Could not start live camera: " + err.message);
+  }
+}
+
+function pauseLiveMirror() {
+  state.liveMirroring = false;
+  if (state.liveLoopTimer) {
+    clearInterval(state.liveLoopTimer);
+    state.liveLoopTimer = null;
+  }
+  $("btn-live-toggle").textContent = "▶ Resume Mirror";
+  $("live-status-text").textContent = "Mirroring paused. Click Resume or click Done to build hardware.";
+}
+
+function captureCurrentLiveFrameB64() {
+  const video = $("live-video");
+  if (!video || !video.videoWidth) return null;
+  const canvas = $("capture-canvas");
+  // Downscale slightly if huge so 1.5s frames upload & process fast
+  const maxW = 1024;
+  const scale = Math.min(1, maxW / video.videoWidth);
+  canvas.width = Math.round(video.videoWidth * scale);
+  canvas.height = Math.round(video.videoHeight * scale);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  return match ? { mimeType: match[1], b64: match[2] } : null;
+}
+
+async function grabAndSendLiveFrame() {
+  if (!state.liveMirroring || state.liveFrameInFlight || !state.liveSessionId) return;
+  const frame = captureCurrentLiveFrameB64();
+  if (!frame) return;
+
+  state.liveFrameInFlight = true;
+  try {
+    const res = await fetch("/api/live/frame", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: state.liveSessionId,
+        image_b64: frame.b64,
+        mime_type: frame.mimeType,
+        saved_modules: state.savedModules.map((m) => ({
+          name: m.name,
+          inputs: m.inputs || [],
+          outputs: m.outputs || [],
+        })),
+      }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    state.liveFrameCount = data.frame_index || state.liveFrameCount + 1;
+
+    const gatePill = $("live-gate-pill");
+    if (!data.usable) {
+      gatePill.textContent = `Skipped (${Math.round((data.gate?.usable_prob || 0) * 100)}%)`;
+      gatePill.className = "mini-pill warn";
+      $("live-status-text").textContent = data.gate?.reason || "Skipped blurry or blocked frame.";
+    } else {
+      state.liveUsableCount += 1;
+      state.liveLastImageB64 = frame.b64;
+      state.liveSchematic = data.schematic;
+
+      gatePill.textContent = `Clear (${Math.round((data.gate?.usable_prob || 0) * 100)}%)`;
+      gatePill.className = "mini-pill ok";
+
+      if (window.SchematicRenderer) {
+        window.SchematicRenderer.render($("live-schematic-canvas"), data.schematic);
+      }
+
+      const nEl = (data.schematic?.elements || []).length;
+      const nWires = (data.schematic?.wires || []).length;
+      const nUnc = (data.schematic?.elements || []).filter((e) => e.uncertain).length;
+      $("live-status-text").textContent =
+        `${data.schematic?.circuit_title || "Circuit"}: ${nEl} parts, ${nWires} wires` +
+        (nUnc ? ` (${nUnc} uncertain)` : "") +
+        (data.schematic?.notes ? ` — ${data.schematic.notes}` : "");
+
+      // Hook for Step 2 (Module definition box detection)
+      if (typeof onLiveSchematicUpdated === "function") {
+        onLiveSchematicUpdated(data.schematic);
+      }
+    }
+
+    $("live-frame-stats").textContent = `${state.liveUsableCount}/${state.liveFrameCount} usable`;
+  } catch (_) {
+    // Keep mirroring alive on transient error
+  } finally {
+    state.liveFrameInFlight = false;
+  }
+}
+
+async function finishLiveAndBuild() {
+  // Capture one crisp final frame if camera is still open and we don't have one yet
+  const fresh = captureCurrentLiveFrameB64();
+  const finalB64 = fresh?.b64 || state.liveLastImageB64;
+  if (!finalB64) {
+    alert("No camera frame captured yet. Start Live Mirror and show your circuit first.");
+    return;
+  }
+
+  pauseLiveMirror();
+  await stopAndUploadRecording();
+  const finishedSessionId = state.liveSessionId;
+  if (finishedSessionId) {
+    fetch("/api/live/finish", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: finishedSessionId }),
+    }).catch(() => {});
+  }
+  stopLiveVideoStream();
+  $("live-video-placeholder").classList.remove("hidden");
+  $("btn-live-toggle").textContent = "▶ Start Live Mirror";
+  state.liveSessionId = null;
+
+  const note = $("live-note").value.trim();
+  await startPipeline({
+    image_b64: finalB64,
+    mime_type: "image/jpeg",
+    text_prompt: note || undefined,
+    schematic_json: state.liveSchematic || undefined,
+    live_session_id: finishedSessionId || undefined,
+  });
 }
 
 function loadImageFile(file) {
@@ -277,31 +606,37 @@ function resetPipelineUI() {
 }
 
 // --- Run Pipeline (SSE Stream) ---
-async function startPipeline() {
+async function startPipeline(liveOverride = null) {
   if (state.running) return;
 
   const payload = {
     baseline_mode: $("toggle-baseline").checked,
     enable_improve: $("toggle-improve").checked,
     enable_synthesis: $("toggle-synthesis").checked,
+    saved_modules: state.savedModules.length ? state.savedModules : undefined,
   };
 
-  if (state.inputMode === "photo") {
+  if (liveOverride) {
+    Object.assign(payload, liveOverride);
+  } else if (state.inputMode === "photo") {
     if (!state.imageB64) {
-      alert("Please upload or capture a photo of a circuit diagram first (or switch to Typed Description).");
+      alert("Please upload or capture a photo of a circuit diagram first (or switch tabs).");
       return;
     }
     payload.image_b64 = state.imageB64;
     payload.mime_type = state.mimeType;
     const note = $("photo-note").value.trim();
     if (note) payload.text_prompt = note;
-  } else {
+  } else if (state.inputMode === "text") {
     const desc = $("text-prompt").value.trim();
     if (!desc) {
       alert("Please type a circuit description first.");
       return;
     }
     payload.text_prompt = desc;
+  } else {
+    alert("Click 'Done — Build Virtual Hardware' in Live Camera mode, or switch to Photo Upload / Typed Description.");
+    return;
   }
 
   state.running = true;

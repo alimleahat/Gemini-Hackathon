@@ -90,13 +90,69 @@
             <h2>Circuit Input</h2>
           </div>
           <div class="input-tabs" role="tablist">
-            <button type="button" class="tab-btn active" data-tab="photo">Photo / Camera</button>
+            <button type="button" class="tab-btn active" data-tab="live">Live Camera</button>
+            <button type="button" class="tab-btn" data-tab="photo">Photo Upload</button>
             <button type="button" class="tab-btn" data-tab="text">Typed Description</button>
           </div>
         </div>
 
-        <!-- Photo / Camera Panel -->
-        <div id="panel-photo" class="tab-panel active">
+        <!-- Live Camera Mirroring Panel (Primary) -->
+        <div id="panel-live" class="tab-panel active">
+          <div class="live-toolbar">
+            <select id="camera-select" class="camera-select" aria-label="Choose camera">
+              <option value="">Select camera (iPhone Continuity / Webcam)...</option>
+            </select>
+            <button type="button" id="btn-refresh-cameras" class="btn-secondary" title="Refresh camera list">↻</button>
+            <button type="button" id="btn-live-toggle" class="btn-primary">▶ Start Live Mirror</button>
+            <span id="live-rec-badge" class="rec-badge hidden">● REC</span>
+          </div>
+
+          <div class="live-split">
+            <div class="live-pane">
+              <div class="pane-label">
+                <span>PAPER CAMERA FEED</span>
+                <span id="live-gate-pill" class="mini-pill">Idle</span>
+              </div>
+              <div class="live-video-box">
+                <video id="live-video" autoplay playsinline muted></video>
+                <div id="live-video-placeholder" class="live-placeholder">
+                  Pick your iPhone (Continuity Camera) or webcam above, then click <strong>Start Live Mirror</strong>.
+                </div>
+              </div>
+            </div>
+
+            <div class="live-pane">
+              <div class="pane-label">
+                <span>LIVE DIGITAL SCHEMATIC</span>
+                <span id="live-reader-pill" class="mini-pill">gemini-4-hydrogen</span>
+              </div>
+              <div id="live-schematic-canvas" class="schematic-box"></div>
+            </div>
+          </div>
+
+          <div id="live-status-bar" class="live-status-bar">
+            <span id="live-status-text">Ready to mirror your hand-drawn circuit every 1.5s.</span>
+            <span id="live-frame-stats" class="mono-muted">0 frames</span>
+          </div>
+
+          <div id="live-detected-box-bar" class="detected-box-bar hidden"></div>
+
+          <input
+            type="text"
+            id="live-note"
+            class="text-input-sm"
+            placeholder="Optional note for final build (e.g. '4-bit counter, reset on center button')"
+          />
+
+          <div class="run-bar">
+            <button type="button" id="btn-live-done" class="btn-success btn-run" disabled>
+              Done — Build Virtual Hardware →
+            </button>
+          </div>
+        </div>
+
+        <!-- Photo / Camera Backup Panel -->
+        <div id="panel-photo" class="tab-panel">
           <div class="dropzone" id="dropzone">
             <input type="file" id="file-input" accept="image/*" capture="environment" hidden />
             <div id="dropzone-empty" class="dropzone-empty">
@@ -141,7 +197,7 @@
           ></textarea>
         </div>
 
-        <div class="run-bar">
+        <div class="run-bar" id="backup-run-bar">
           <button type="button" id="btn-run" class="btn-primary btn-run">
             <span id="btn-run-label">Build Virtual Hardware</span>
           </button>
@@ -326,6 +382,7 @@
   </div>
 
   <canvas id="capture-canvas" hidden></canvas>
+  <script src="/static/schematic.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

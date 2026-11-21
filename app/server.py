@@ -16,7 +16,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Dict
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 # Ensure repo root is on sys.path so `from app...` works regardless of cwd
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -26,6 +26,7 @@ if str(REPO_ROOT) not in sys.path:
 from app.config import (
     GATE_CONFIG,
     IMPROVE_CONFIG,
+    LIVE_CONFIG,
     MODELS,
     SERVER_HOST,
     SERVER_PORT,
@@ -35,6 +36,7 @@ from app.pipeline.board_sim import board_manager
 from app.pipeline.gate import run_gate
 from app.pipeline.generator import run_generate
 from app.pipeline.improver import run_improve_loop
+from app.pipeline.live_session import live_session_manager
 from app.pipeline.logger import (
     list_recent_runs,
     make_run_id,
@@ -104,6 +106,7 @@ class AppHandler(BaseHTTPRequestHandler):
             self._send_json(
                 {
                     "models": MODELS,
+                    "live": LIVE_CONFIG,
                     "gate": GATE_CONFIG,
                     "improve": IMPROVE_CONFIG,
                 }
@@ -128,8 +131,74 @@ class AppHandler(BaseHTTPRequestHandler):
         if path == "/api/pipeline/stream":
             self._handle_pipeline_stream()
             return
+        if path == "/api/live/start":
+            self._handle_live_start()
+            return
+        if path == "/api/live/frame":
+            self._handle_live_frame()
+            return
+        if path == "/api/live/video":
+            self._handle_live_video(parsed.query)
+            return
+        if path == "/api/live/finish":
+            self._handle_live_finish()
+            return
 
         self.send_error(HTTPStatus.NOT_FOUND, "Not found")
+
+    def _handle_live_start(self) -> None:
+        try:
+            body = self._read_json_body()
+            camera_label = str(body.get("camera_label", ""))
+            res = live_session_manager.start_session(camera_label=camera_label)
+            self._send_json(res)
+        except Exception as e:
+            self._send_json({"error": str(e)}, status=500)
+
+    def _handle_live_frame(self) -> None:
+        try:
+            body = self._read_json_body()
+            session_id = str(body.get("session_id", ""))
+            image_b64 = body.get("image_b64")
+            mime_type = body.get("mime_type") or "image/jpeg"
+            saved_modules = body.get("saved_modules") or None
+            if not session_id or not image_b64:
+                self._send_json({"error": "session_id and image_b64 are required"}, status=400)
+                return
+            res = live_session_manager.process_frame(
+                session_id=session_id,
+                image_b64=image_b64,
+                mime_type=mime_type,
+                saved_modules=saved_modules,
+            )
+            self._send_json(res)
+        except Exception as e:
+            traceback.print_exc()
+            self._send_json({"error": str(e)}, status=500)
+
+    def _handle_live_video(self, query_string: str) -> None:
+        try:
+            qs = parse_qs(query_string)
+            session_id = (qs.get("session_id") or [""])[0]
+            if not session_id:
+                self._send_json({"error": "session_id query parameter required"}, status=400)
+                return
+            length = int(self.headers.get("Content-Length", "0"))
+            video_bytes = self.rfile.read(length) if length > 0 else b""
+            content_type = self.headers.get("Content-Type", "video/webm")
+            res = live_session_manager.save_video(session_id, video_bytes, content_type)
+            self._send_json(res)
+        except Exception as e:
+            self._send_json({"error": str(e)}, status=500)
+
+    def _handle_live_finish(self) -> None:
+        try:
+            body = self._read_json_body()
+            session_id = str(body.get("session_id", ""))
+            res = live_session_manager.finish_session(session_id)
+            self._send_json(res)
+        except Exception as e:
+            self._send_json({"error": str(e)}, status=500)
 
     def _handle_board_step(self) -> None:
         try:
@@ -155,6 +224,9 @@ class AppHandler(BaseHTTPRequestHandler):
         image_b64 = body.get("image_b64") or None
         mime_type = body.get("mime_type") or "image/jpeg"
         text_prompt = (body.get("text_prompt") or "").strip() or None
+        schematic_json = body.get("schematic_json") or None
+        live_session_id = body.get("live_session_id") or None
+        saved_modules = body.get("saved_modules") or None
         baseline_mode = bool(body.get("baseline_mode", False))
         enable_improve = bool(body.get("enable_improve", True)) and not baseline_mode
         enable_synthesis = bool(body.get("enable_synthesis", True))
@@ -190,10 +262,12 @@ class AppHandler(BaseHTTPRequestHandler):
             },
             "models": MODELS,
             "input": {
-                "type": "image" if image_b64 else "text",
+                "type": "live_camera" if live_session_id else ("image" if image_b64 else "text"),
                 "image_file": saved_image_rel,
                 "mime_type": mime_type if image_b64 else None,
                 "text_prompt": text_prompt,
+                "live_session_id": live_session_id,
+                "schematic_json": schematic_json,
             },
             "gate": None,
             "generate": None,
@@ -239,6 +313,8 @@ class AppHandler(BaseHTTPRequestHandler):
                 mime_type=mime_type,
                 text_prompt=text_prompt,
                 circuit_type=gate_res.get("circuit_type_label"),
+                schematic_json=schematic_json,
+                saved_modules=saved_modules,
             )
             run_record["generate"] = gen_res
             self._send_sse("stage", {"stage": "generate", "status": "done", "data": gen_res})
