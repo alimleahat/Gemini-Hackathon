@@ -88,6 +88,7 @@ def generate_independent_testbench(
         model=MODELS["testbench"],
         system_instruction=TB_SYSTEM_INSTRUCTION,
         input=input_blocks,
+        generation_config={"thinking_level": "high"},
         response_format={
             "type": "text",
             "mime_type": "application/json",

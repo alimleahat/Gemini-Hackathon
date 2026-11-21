@@ -23,8 +23,7 @@ const state = {
   liveSchematic: null,
   liveRecorder: null,
   liveRecordedChunks: [],
-  inkEngine: null,
-  showFullRawCam: false,
+  liveMaxFramePx: 768,
   camRotation: 0,    // 0, 90, 180, 270 (persisted in localStorage)
   camMirror: false,  // horizontal mirror/flip (persisted in localStorage)
 
@@ -95,6 +94,9 @@ async function init() {
       }
       if (cfg.live?.frame_interval_ms) {
         state.liveIntervalMs = cfg.live.frame_interval_ms;
+      }
+      if (cfg.live?.live_max_frame_px) {
+        state.liveMaxFramePx = cfg.live.live_max_frame_px;
       }
     }
   } catch (_) {}
@@ -216,21 +218,6 @@ function bindInputEvents() {
 }
 
 // --- Live Camera Mirroring (Continuity Camera / Webcam) ---
-function bindLiveCameraEvents() {
-  if (window.FastInkEngine) {
-    state.inkEngine = window.FastInkEngine.create({
-      videoEl: $("live-video"),
-      outCanvas: $("live-ink-canvas"),
-      fpsEl: $("live-ink-fps"),
-      threshold: Number($("ink-thresh-slider").value) || 24,
-      targetFps: 25,
-    });
-  }
-  $("ink-thresh-slider").addEventListener("input", (e) => {
-    const v = Number(e.target.value);
-    $("ink-thresh-val").textContent = String(v);
-    if (state.inkEngine) state.inkEngine.setThreshold(v);
-  });
 const CAM_ORIENT_STORAGE_KEY = "fpga_cam_orientation_v1";
 
 function loadCameraOrientation() {
@@ -254,12 +241,7 @@ function saveCameraOrientation() {
   } catch (_) {}
 }
 
-function applyCameraOrientation(clearInk = false) {
-  if (state.inkEngine) {
-    state.inkEngine.setRotation(state.camRotation);
-    state.inkEngine.setMirror(state.camMirror);
-    if (clearInk) state.inkEngine.clear();
-  }
+function applyCameraOrientation() {
   const transforms = [];
   if (state.camRotation) transforms.push(`rotate(${state.camRotation}deg)`);
   if (state.camMirror) transforms.push("scaleX(-1)");
@@ -276,43 +258,20 @@ function applyCameraOrientation(clearInk = false) {
   }
 }
 
+function bindLiveCameraEvents() {
   loadCameraOrientation();
-  applyCameraOrientation(false);
+  applyCameraOrientation();
 
-  $("btn-clear-ink")?.addEventListener("click", () => {
-    if (state.inkEngine) state.inkEngine.clear();
-  });
-  $("btn-ink-mode")?.addEventListener("click", () => {
-    if (!state.inkEngine) return;
-    const next = state.inkEngine.getMode() === "clean" ? "raw" : "clean";
-    state.inkEngine.setMode(next);
-    const btn = $("btn-ink-mode");
-    btn.textContent = next === "clean" ? "Clean Canvas" : "Raw Ink";
-    btn.classList.toggle("active", next === "clean");
-  });
-  $("btn-ink-debug")?.addEventListener("click", () => {
-    if (!state.inkEngine) return;
-    const next = !state.inkEngine.getDebug();
-    state.inkEngine.setDebug(next);
-    $("btn-ink-debug").classList.toggle("active", next);
-  });
   $("btn-rotate-ink")?.addEventListener("click", () => {
     state.camRotation = (state.camRotation + 90) % 360;
     saveCameraOrientation();
-    applyCameraOrientation(true);
+    applyCameraOrientation();
   });
   $("btn-flip-ink")?.addEventListener("click", () => {
     state.camMirror = !state.camMirror;
     saveCameraOrientation();
-    applyCameraOrientation(true);
+    applyCameraOrientation();
   });
-  const toggleRaw = () => {
-    state.showFullRawCam = !state.showFullRawCam;
-    $("live-video").classList.toggle("full-raw", state.showFullRawCam);
-    $("btn-toggle-raw-cam").textContent = state.showFullRawCam ? "Show Digital Ink" : "Show Raw Cam";
-  };
-  $("btn-toggle-raw-cam").addEventListener("click", toggleRaw);
-  $("live-video").addEventListener("click", toggleRaw);
 
   $("btn-refresh-cameras").addEventListener("click", () => populateCameraList(true));
   $("camera-select").addEventListener("change", async () => {
@@ -378,7 +337,7 @@ async function openLiveVideoStream(deviceId) {
   await video.play();
   video.classList.remove("hidden");
   $("live-video-placeholder").classList.add("hidden");
-  if (state.inkEngine) state.inkEngine.start();
+  applyCameraOrientation();
 
   // Refresh camera list now that permission is granted so real labels (e.g. iPhone) appear
   await populateCameraList(false);
@@ -389,7 +348,6 @@ async function openLiveVideoStream(deviceId) {
 }
 
 function stopLiveVideoStream() {
-  if (state.inkEngine) state.inkEngine.stop();
   $("live-video").classList.add("hidden");
   if (state.liveStream) {
     state.liveStream.getTracks().forEach((t) => t.stop());
@@ -492,12 +450,11 @@ function pauseLiveMirror() {
   $("live-status-text").textContent = "Mirroring paused. Click Resume or click Done to build hardware.";
 }
 
-function captureCurrentLiveFrameB64() {
+function captureCurrentLiveFrameB64(maxDim = state.liveMaxFramePx || 768) {
   const video = $("live-video");
   if (!video || !video.videoWidth) return null;
   const canvas = $("capture-canvas");
-  // Downscale slightly if huge so 1.5s frames upload & process fast
-  const maxDim = 1024;
+  // Resize live frames to max ~768px for fast per-frame recognition
   const scale = Math.min(1, maxDim / Math.max(video.videoWidth, video.videoHeight));
   const rawW = Math.round(video.videoWidth * scale);
   const rawH = Math.round(video.videoHeight * scale);
@@ -529,6 +486,7 @@ async function grabAndSendLiveFrame() {
   if (!frame) return;
 
   state.liveFrameInFlight = true;
+  const tClient = performance.now();
   try {
     const res = await fetch("/api/live/frame", {
       method: "POST",
@@ -546,12 +504,18 @@ async function grabAndSendLiveFrame() {
     });
     if (!res.ok) return;
     const data = await res.json();
+    const clientMs = Math.round(performance.now() - tClient);
     state.liveFrameCount = data.frame_index || state.liveFrameCount + 1;
 
     const gatePill = $("live-gate-pill");
+    const latPill = $("live-latency-pill");
+    const gateMs = data.gate?.duration_ms || 0;
+    const readMs = data.reader_ms || 0;
+
     if (!data.usable) {
       gatePill.textContent = `Skipped (${Math.round((data.gate?.usable_prob || 0) * 100)}%)`;
       gatePill.className = "mini-pill warn";
+      if (latPill) latPill.textContent = `${gateMs || clientMs}ms (skipped)`;
       $("live-status-text").textContent = data.gate?.reason || "Skipped blurry or blocked frame.";
     } else {
       state.liveUsableCount += 1;
@@ -560,6 +524,10 @@ async function grabAndSendLiveFrame() {
 
       gatePill.textContent = `Clear (${Math.round((data.gate?.usable_prob || 0) * 100)}%)`;
       gatePill.className = "mini-pill ok";
+      if (latPill) {
+        const totSec = ((data.total_ms || clientMs) / 1000).toFixed(2);
+        latPill.textContent = `${totSec}s (gate ${gateMs}ms + read ${readMs}ms)`;
+      }
 
       if (window.SchematicRenderer) {
         window.SchematicRenderer.render($("live-schematic-canvas"), data.schematic);

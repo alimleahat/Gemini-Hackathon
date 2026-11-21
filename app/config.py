@@ -28,6 +28,8 @@ LIVE_CONFIG = {
     "frame_interval_ms": 1500,          # Grab a frame every ~1.5 seconds
     "min_usable_prob": 0.55,            # Minimum P(usable) from gemini-decision-1 to keep frame
     "best_frame_window_sec": 5.0,       # Pick highest-scoring frame from last ~5s on Done
+    "live_thinking_level": "low",       # Fast per-frame recognition during live mirroring
+    "live_max_frame_px": 768,           # Resize live frames to max ~768px before sending
 }
 
 # Step 2 (Decision Gate) thresholds

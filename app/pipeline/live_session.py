@@ -185,6 +185,9 @@ def extract_live_schematic(
             {"type": "image", "data": image_b64, "mime_type": mime_type or "image/jpeg"},
             {"type": "text", "text": "\n\n".join(prompt_parts)},
         ],
+        generation_config={
+            "thinking_level": LIVE_CONFIG.get("live_thinking_level", "low"),
+        },
         response_format={
             "type": "text",
             "mime_type": "application/json",
@@ -315,6 +318,7 @@ class LiveSessionManager:
             "usable": True,
             "gate": gate,
             "reader_ms": reader["duration_ms"],
+            "total_ms": gate["duration_ms"] + reader["duration_ms"],
             "schematic": reader["schematic"],
         }
 

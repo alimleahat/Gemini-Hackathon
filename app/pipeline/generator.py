@@ -157,6 +157,7 @@ def run_generate(
         model=MODELS["generate"],
         system_instruction=SYSTEM_INSTRUCTION,
         input=input_blocks,
+        generation_config={"thinking_level": "high"},
         response_format={
             "type": "text",
             "mime_type": "application/json",
