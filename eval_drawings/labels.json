@@ -7,5 +7,78 @@
     "adder_4bit_7seg",
     "counter_4bit"
   ],
-  "sessions": {}
+  "sessions": {
+    "live_20261121_182841_687526": {
+      "circuit": "TODO",
+      "notes": "Excluded: earlier dev session (>1h ago, 13:28 EST)"
+    },
+    "live_20261121_185856_0c666f": {
+      "circuit": "TODO",
+      "notes": "Excluded: earlier dev session (>1h ago, 13:58 EST)"
+    },
+    "live_20261121_190038_27caf0": {
+      "circuit": "TODO",
+      "notes": "Excluded: earlier dev session (>1h ago, 14:00 EST)"
+    },
+    "live_20261121_200207_83bf3f": {
+      "circuit": "TODO",
+      "notes": "Excluded: earlier dev session (>1h ago, 15:02 EST)"
+    },
+    "live_20261121_203444_e18212": {
+      "circuit": "half_adder",
+      "notes": "Pre-fix failure: blocked by Decision 1 readability gate (25% readable, hard-block <60%)"
+    },
+    "live_20261121_204409_04dddf": {
+      "circuit": "half_adder",
+      "notes": "Pre-fix failure: blocked by Decision 1 readability gate (53% readable, hard-block <60%)"
+    },
+    "live_20261121_204939_757772": {
+      "circuit": "TODO",
+      "notes": "Excluded: unfinished live session (no Done / no pipeline run)"
+    },
+    "live_20261121_205457_477612": {
+      "circuit": "TODO",
+      "notes": "Excluded: unfinished live session (Empty Page, no Done / no pipeline run)"
+    },
+    "live_20261121_210311_5d1d14": {
+      "circuit": "TODO",
+      "notes": "Excluded: unfinished live session (no Done / no pipeline run)"
+    },
+    "live_20261121_210407_9324bc": {
+      "circuit": "half_adder",
+      "notes": "Pre-fix failure: blocked by Decision 1 readability gate (36% readable, hard-block <60%)"
+    },
+    "live_20261121_210635_449770": {
+      "circuit": "half_adder",
+      "notes": "Pre-fix failure: blocked by Decision 1 readability gate (38% readable, hard-block <60%, 1 frame)"
+    },
+    "live_20261121_210647_33ad6c": {
+      "circuit": "half_adder",
+      "notes": "Pre-fix failure: blocked by Decision 1 readability gate (48% readable, hard-block <60%, 2 frames)"
+    },
+    "live_20261121_210805_b941a8": {
+      "circuit": "half_adder",
+      "notes": "Pre-fix failure: blocked by Decision 1 readability gate (45% readable, hard-block <60%)"
+    },
+    "live_20261121_211117_c13586": {
+      "circuit": "half_adder",
+      "notes": "Post-fix run: Decision 1 gate warned (47% readable) and proceeded"
+    },
+    "live_20261121_211759_b541e4": {
+      "circuit": "half_adder",
+      "notes": "Post-fix run: 85% readable, saved to module library as HA"
+    },
+    "live_20261121_212050_561c1d": {
+      "circuit": "full_adder",
+      "notes": "Post-fix run: 75% readable, saved to module library as FA"
+    },
+    "live_20261121_212316_a12852": {
+      "circuit": "adder_4bit",
+      "notes": "Post-fix run: 80% readable, 4-Bit Ripple-Carry Adder"
+    },
+    "live_20261121_212959_7e0fb4": {
+      "circuit": "counter_4bit",
+      "notes": "Post-fix run: 87% readable, 4-Bit Synchronous Up-Counter"
+    }
+  }
 }

@@ -1,0 +1,578 @@
+{
+  "timestamp_utc": "2026-11-21T21:44:00.405625+00:00",
+  "per_circuit": [
+    {
+      "level": 1,
+      "circuit": "half_adder",
+      "sessions": 8,
+      "baseline_passed": 8,
+      "baseline_pass_rate_pct": 100.0,
+      "system_passed": 2,
+      "system_pass_rate_pct": 25.0,
+      "avg_baseline_seconds": 27.1,
+      "avg_system_seconds": 14.7
+    },
+    {
+      "level": 2,
+      "circuit": "full_adder",
+      "sessions": 1,
+      "baseline_passed": 1,
+      "baseline_pass_rate_pct": 100.0,
+      "system_passed": 1,
+      "system_pass_rate_pct": 100.0,
+      "avg_baseline_seconds": 14.8,
+      "avg_system_seconds": 114.0
+    },
+    {
+      "level": 3,
+      "circuit": "adder_4bit",
+      "sessions": 1,
+      "baseline_passed": 0,
+      "baseline_pass_rate_pct": 0.0,
+      "system_passed": 1,
+      "system_pass_rate_pct": 100.0,
+      "avg_baseline_seconds": 20.4,
+      "avg_system_seconds": 163.9
+    },
+    {
+      "level": 5,
+      "circuit": "counter_4bit",
+      "sessions": 1,
+      "baseline_passed": 1,
+      "baseline_pass_rate_pct": 100.0,
+      "system_passed": 1,
+      "system_pass_rate_pct": 100.0,
+      "avg_baseline_seconds": 12.1,
+      "avg_system_seconds": 174.7
+    }
+  ],
+  "first_failing_level": "Level 1: half_adder",
+  "failures": [
+    {
+      "session_id": "live_20261121_203444_e18212",
+      "circuit": "half_adder",
+      "system": "our_system",
+      "reason": "misread_drawing (rejected by gate)"
+    },
+    {
+      "session_id": "live_20261121_204409_04dddf",
+      "circuit": "half_adder",
+      "system": "our_system",
+      "reason": "misread_drawing (rejected by gate)"
+    },
+    {
+      "session_id": "live_20261121_210407_9324bc",
+      "circuit": "half_adder",
+      "system": "our_system",
+      "reason": "misread_drawing (rejected by gate)"
+    },
+    {
+      "session_id": "live_20261121_210635_449770",
+      "circuit": "half_adder",
+      "system": "our_system",
+      "reason": "misread_drawing (rejected by gate)"
+    },
+    {
+      "session_id": "live_20261121_210647_33ad6c",
+      "circuit": "half_adder",
+      "system": "our_system",
+      "reason": "misread_drawing (rejected by gate)"
+    },
+    {
+      "session_id": "live_20261121_210805_b941a8",
+      "circuit": "half_adder",
+      "system": "our_system",
+      "reason": "misread_drawing (rejected by gate)"
+    },
+    {
+      "session_id": "live_20261121_212316_a12852",
+      "circuit": "adder_4bit",
+      "system": "baseline",
+      "reason": "misread_drawing / wrong_module (No matching input port (width=4) for 'a' in []; No matching input port (width=4) for 'b' in []; No matching output port (width=4) for 'sum' in [])"
+    }
+  ],
+  "sessions": [
+    {
+      "session_id": "live_20261121_203444_e18212",
+      "circuit": "half_adder",
+      "best_frame": "frame_0022.jpg",
+      "baseline": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 6.38,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "half_adder",
+          "is_board_top": false,
+          "matched_roles": {
+            "a": "A",
+            "b": "B",
+            "sum": "Sum",
+            "cout": "Carry"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_dvhng8uv/tb_ak.v:20: $finish called at 40 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 107
+        }
+      },
+      "our_system": {
+        "passed": false,
+        "status": "gate_rejected",
+        "elapsed_seconds": 1.02,
+        "reason": "misread_drawing (rejected by gate)",
+        "details": {
+          "passed": false,
+          "status": "gate_rejected",
+          "reason": "Low confidence (25% readable, 75% confidence). Please retake the photo with better lighting, sharper focus, and a clear view of the circuit diagram."
+        }
+      }
+    },
+    {
+      "session_id": "live_20261121_204409_04dddf",
+      "circuit": "half_adder",
+      "best_frame": "frame_0012.jpg",
+      "baseline": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 16.62,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "half_adder",
+          "is_board_top": false,
+          "matched_roles": {
+            "a": "A",
+            "b": "B",
+            "sum": "sum",
+            "cout": "Carry"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_xfe2zqu5/tb_ak.v:20: $finish called at 40 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 97
+        }
+      },
+      "our_system": {
+        "passed": false,
+        "status": "gate_rejected",
+        "elapsed_seconds": 1.37,
+        "reason": "misread_drawing (rejected by gate)",
+        "details": {
+          "passed": false,
+          "status": "gate_rejected",
+          "reason": "Low confidence (53% readable, 53% confidence). Please retake the photo with better lighting, sharper focus, and a clear view of the circuit diagram."
+        }
+      }
+    },
+    {
+      "session_id": "live_20261121_210407_9324bc",
+      "circuit": "half_adder",
+      "best_frame": "frame_0012.jpg",
+      "baseline": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 128.64,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "half_adder",
+          "is_board_top": false,
+          "matched_roles": {
+            "a": "A",
+            "b": "B",
+            "sum": "sum",
+            "cout": "carry"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_5r0flpu1/tb_ak.v:20: $finish called at 40 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 85
+        }
+      },
+      "our_system": {
+        "passed": false,
+        "status": "gate_rejected",
+        "elapsed_seconds": 0.81,
+        "reason": "misread_drawing (rejected by gate)",
+        "details": {
+          "passed": false,
+          "status": "gate_rejected",
+          "reason": "Low confidence (36% readable, 64% confidence). Please retake the photo with better lighting, sharper focus, and a clear view of the circuit diagram."
+        }
+      }
+    },
+    {
+      "session_id": "live_20261121_210635_449770",
+      "circuit": "half_adder",
+      "best_frame": "frame_0001.jpg",
+      "baseline": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 15.62,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "HA",
+          "is_board_top": false,
+          "matched_roles": {
+            "a": "A",
+            "b": "B",
+            "sum": "sum",
+            "cout": "Carry"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_4jqo5voe/tb_ak.v:20: $finish called at 40 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 55
+        }
+      },
+      "our_system": {
+        "passed": false,
+        "status": "gate_rejected",
+        "elapsed_seconds": 0.79,
+        "reason": "misread_drawing (rejected by gate)",
+        "details": {
+          "passed": false,
+          "status": "gate_rejected",
+          "reason": "Low confidence (38% readable, 62% confidence). Please retake the photo with better lighting, sharper focus, and a clear view of the circuit diagram."
+        }
+      }
+    },
+    {
+      "session_id": "live_20261121_210647_33ad6c",
+      "circuit": "half_adder",
+      "best_frame": "frame_0001.jpg",
+      "baseline": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 11.64,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "HA",
+          "is_board_top": false,
+          "matched_roles": {
+            "a": "A",
+            "b": "B",
+            "sum": "sum",
+            "cout": "Carry"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_c88deuzv/tb_ak.v:20: $finish called at 40 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 52
+        }
+      },
+      "our_system": {
+        "passed": false,
+        "status": "gate_rejected",
+        "elapsed_seconds": 0.8,
+        "reason": "misread_drawing (rejected by gate)",
+        "details": {
+          "passed": false,
+          "status": "gate_rejected",
+          "reason": "Low confidence (48% readable, 52% confidence). Please retake the photo with better lighting, sharper focus, and a clear view of the circuit diagram."
+        }
+      }
+    },
+    {
+      "session_id": "live_20261121_210805_b941a8",
+      "circuit": "half_adder",
+      "best_frame": "frame_0018.jpg",
+      "baseline": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 7.3,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "half_adder",
+          "is_board_top": false,
+          "matched_roles": {
+            "a": "A",
+            "b": "B",
+            "sum": "sum",
+            "cout": "Carry"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_f8ii5_4b/tb_ak.v:20: $finish called at 40 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 64
+        }
+      },
+      "our_system": {
+        "passed": false,
+        "status": "gate_rejected",
+        "elapsed_seconds": 0.71,
+        "reason": "misread_drawing (rejected by gate)",
+        "details": {
+          "passed": false,
+          "status": "gate_rejected",
+          "reason": "Low confidence (45% readable, 55% confidence). Please retake the photo with better lighting, sharper focus, and a clear view of the circuit diagram."
+        }
+      }
+    },
+    {
+      "session_id": "live_20261121_211117_c13586",
+      "circuit": "half_adder",
+      "best_frame": "frame_0017.jpg",
+      "baseline": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 14.24,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "HA",
+          "is_board_top": false,
+          "matched_roles": {
+            "a": "A",
+            "b": "B",
+            "sum": "Sum",
+            "cout": "Carry"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_u0ncyqtw/tb_ak.v:20: $finish called at 40 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 134
+        }
+      },
+      "our_system": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 53.5,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "top",
+          "is_board_top": true,
+          "matched_roles": {
+            "a": "sw[0]",
+            "b": "sw[1]",
+            "sum": "led[0]",
+            "cout": "led[1]"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_zk8xn__l/tb_ak.v:22: $finish called at 40 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 89
+        }
+      }
+    },
+    {
+      "session_id": "live_20261121_211759_b541e4",
+      "circuit": "half_adder",
+      "best_frame": "frame_0014.jpg",
+      "baseline": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 16.29,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "HA",
+          "is_board_top": false,
+          "matched_roles": {
+            "a": "A",
+            "b": "B",
+            "sum": "sum",
+            "cout": "carry"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_adcpv1l7/tb_ak.v:20: $finish called at 40 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 100
+        }
+      },
+      "our_system": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 58.31,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "top",
+          "is_board_top": true,
+          "matched_roles": {
+            "a": "sw[0]",
+            "b": "sw[1]",
+            "sum": "led[0]",
+            "cout": "led[1]"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_mjklur26/tb_ak.v:22: $finish called at 40 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 35
+        }
+      }
+    },
+    {
+      "session_id": "live_20261121_212050_561c1d",
+      "circuit": "full_adder",
+      "best_frame": "frame_0014.jpg",
+      "baseline": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 14.78,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "FA",
+          "is_board_top": false,
+          "matched_roles": {
+            "a": "A",
+            "b": "B",
+            "cin": "Cin",
+            "sum": "Sum",
+            "cout": "Cout"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_oy7bq2km/tb_ak.v:21: $finish called at 80 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 79
+        }
+      },
+      "our_system": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 114.0,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "top",
+          "is_board_top": true,
+          "matched_roles": {
+            "a": "sw[0]",
+            "b": "sw[1]",
+            "cin": "sw[2]",
+            "sum": "led[0]",
+            "cout": "led[1]"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_or13nxwv/tb_ak.v:22: $finish called at 80 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 43
+        }
+      }
+    },
+    {
+      "session_id": "live_20261121_212316_a12852",
+      "circuit": "adder_4bit",
+      "best_frame": "frame_0017.jpg",
+      "baseline": {
+        "passed": false,
+        "status": "ambiguous_ports",
+        "elapsed_seconds": 20.43,
+        "reason": "misread_drawing / wrong_module (No matching input port (width=4) for 'a' in []; No matching input port (width=4) for 'b' in []; No matching output port (width=4) for 'sum' in [])",
+        "details": {
+          "passed": false,
+          "status": "ambiguous_ports",
+          "top_module": "full_adder",
+          "is_board_top": false,
+          "detected_ports": [
+            {
+              "name": "a",
+              "direction": "input",
+              "width": 1
+            },
+            {
+              "name": "b",
+              "direction": "input",
+              "width": 1
+            },
+            {
+              "name": "cin",
+              "direction": "input",
+              "width": 1
+            },
+            {
+              "name": "s",
+              "direction": "output",
+              "width": 1
+            },
+            {
+              "name": "cout",
+              "direction": "output",
+              "width": 1
+            }
+          ],
+          "matched_roles": {
+            "cin": "cin",
+            "cout": "cout"
+          },
+          "reason": "No matching input port (width=4) for 'a' in []; No matching input port (width=4) for 'b' in []; No matching output port (width=4) for 'sum' in []",
+          "duration_ms": 54
+        }
+      },
+      "our_system": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 163.92,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "top",
+          "is_board_top": true,
+          "matched_roles": {
+            "a": "sw[3:0]",
+            "b": "sw[7:4]",
+            "sum": "led[3:0]",
+            "cout": "led[4]"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_t0vsdop5/tb_ak.v:27: $finish called at 2560 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 97
+        }
+      }
+    },
+    {
+      "session_id": "live_20261121_212959_7e0fb4",
+      "circuit": "counter_4bit",
+      "best_frame": "frame_0013.jpg",
+      "baseline": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 12.06,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "counter_4bit",
+          "is_board_top": false,
+          "matched_roles": {
+            "clk": "Clk",
+            "count": "Q",
+            "rst": "Rst"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_o8zbb80w/tb_ak.v:27: $finish called at 231 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 101
+        }
+      },
+      "our_system": {
+        "passed": true,
+        "status": "pass",
+        "elapsed_seconds": 174.71,
+        "reason": "pass",
+        "details": {
+          "passed": true,
+          "status": "pass",
+          "top_module": "top",
+          "is_board_top": true,
+          "matched_roles": {
+            "clk": "clk",
+            "count": "led[3:0]",
+            "rst": "btn[0]",
+            "en": "btn[0]"
+          },
+          "stdout": "ANSWER_KEY_PASS\n/var/folders/8g/1jp_wwls0gj9lqrxdqlgph5r0000gn/T/ak_sim_hbil2ccn/tb_ak.v:31: $finish called at 231 (1s)",
+          "reason": "Passed exhaustive answer key",
+          "duration_ms": 36
+        }
+      }
+    }
+  ]
+}

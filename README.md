@@ -82,9 +82,25 @@ All area numbers below are **fair-intersection averages only** — computed stri
   - Caught `hill_cipher` via the DSP/RAM resource guard (`DSP 9 → 12`), blocking fake LUT savings.
   - Kept 10 passing optimizations (including `cvdp_copilot_axi_register_0001`, which moved from fail to pass for **16/20 = 80.0%**), reducing fair-intersection area from 57.5 → **46.3 LUTs** and 56.4 → **45.7 FFs** (beating single-shot `gemini-4-neon`'s 49.1 LUTs / 50.9 FFs) in 39.3s total across all 20 problems.
 
-### 3. Drawing Evaluation
+### 3. Drawing Evaluation (Hand-Drawn Circuits, `eval_drawings/`)
 
-> *Placeholder — results from the hand-drawn circuit evaluation (`eval_drawings/`) will be filled in at 4:25 PM.*
+We evaluated 11 completed live-camera drawing sessions captured over 1 hour against exhaustive Icarus Verilog answer keys (`eval_drawings/answer_keys.py`), comparing a **single-shot `gemini-4-neon` baseline** (given the session's best frame, no loop/tests/module library) against **AETHER**.
+
+| Level | Circuit | Sessions | Baseline (`gemini-4-neon`) | AETHER (All Runs) | AETHER (Post-Gate-Fix) | Avg Time (Base / AETHER) |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| 1 | `half_adder` *(pre-fix gate blocks)* | 6 | 6 / 6 (100%) | 0 / 6 (0%) | — | 31.0s / 0.9s *(blocked)* |
+| 1 | `half_adder` *(post-fix)* | 2 | 2 / 2 (100%) | 2 / 2 (100%) | 2 / 2 (100%) | 15.3s / 55.9s |
+| 2 | `full_adder` | 1 | 1 / 1 (100%) | 1 / 1 (100%) | 1 / 1 (100%) | 14.8s / 114.0s |
+| 3 | `adder_4bit` | 1 | **0 / 1 (0%)** | **1 / 1 (100%)** | **1 / 1 (100%)** | 20.4s / 163.9s |
+| 5 | `counter_4bit` | 1 | 1 / 1 (100%) | 1 / 1 (100%) | 1 / 1 (100%) | 12.1s / 174.7s |
+| **Total** | **4 circuits tested** | **11** | **10 / 11 (90.9%)** | **5 / 11 (45.5%)** | **5 / 5 (100%)** | — |
+
+**Key findings & honest caveats:**
+
+- **Very small, single-author sample:** Aside from `half_adder`, each circuit has only **1 session**, all drawn by the author (`adder_4bit_7seg` was not tested). Treat this as an end-to-end smoke test rather than a statistical benchmark.
+- **6 pre-fix readability-gate failures:** In the first 6 `half_adder` sessions, `gemini-decision-1` scored the hand-drawn frames between 25% and 53% readable and hard-blocked the pipeline under the original `<60%` threshold — even though single-shot `gemini-4-neon` solved **6/6** of those exact frames.
+- **The fix & post-fix results:** After changing the Decision 1 gate to warn-and-continue on low confidence and only hard-block below 15% (with a "Build anyway" override), AETHER passed **5/5 (100%)** across all four circuits — including the first post-fix `half_adder` (47% warning) and the hierarchical `adder_4bit` (reusing the saved `FA` module), where single-shot `gemini-4-neon` failed (`ambiguous_ports`: emitted a 1-bit `full_adder` top module instead of a 4-bit adder).
+- **Latency tradeoff:** Full AETHER runs take ~56–175s (live capture + generation + independent testbench + fix loop + Yosys synthesis) versus ~12–20s for a single unverified Neon call.
 
 ---
 
