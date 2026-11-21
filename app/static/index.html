@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sketch2Silicon</title>
+  <title>Aether</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -130,7 +130,7 @@
 
   <!-- Sidebar Collapsed Re-Open Pill -->
   <button type="button" id="btn-sidebar-expand" class="sidebar-reopen-btn hidden" title="Open Sidebar">
-    <span>Sketch2Silicon</span>
+    <span>Aether</span>
   </button>
 
   <!-- =========================================================
@@ -141,7 +141,26 @@
       <!-- App Header -->
       <header class="sidebar-header">
         <div class="brand">
-          <h1>Sketch2Silicon</h1>
+          <div class="aether-logo" aria-label="Aether">
+            <h1 class="aether-wordmark">Aether</h1>
+            <svg class="aether-trace" viewBox="0 0 116 10" width="116" height="10" aria-hidden="true">
+              <defs>
+                <linearGradient id="aetherPulseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#38bdf8" stop-opacity="0" />
+                  <stop offset="45%" stop-color="#38bdf8" stop-opacity="0.95" />
+                  <stop offset="75%" stop-color="#34d399" stop-opacity="1" />
+                  <stop offset="100%" stop-color="#34d399" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <!-- Static subtle PCB copper trace -->
+              <path class="aether-trace-base" d="M 4 5 H 52 L 58 2 H 90 L 95 5 H 112" />
+              <!-- Animated light pulse travelling along the trace -->
+              <path class="aether-trace-pulse" d="M 4 5 H 52 L 58 2 H 90 L 95 5 H 112" stroke="url(#aetherPulseGrad)" />
+              <!-- Via / solder pads -->
+              <circle class="aether-pad" cx="4" cy="5" r="2" />
+              <circle class="aether-pad aether-pad-end" cx="112" cy="5" r="2" />
+            </svg>
+          </div>
           <span class="status-badge idle" id="status-board">Ready</span>
         </div>
         <div class="header-actions">
