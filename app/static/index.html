@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paper → FPGA | Live Circuit-to-Hardware Studio</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <div>
+        <h1>Paper <span class="arrow">→</span> FPGA</h1>
+        <p class="subtitle">Hand-drawn circuit to live virtual hardware</p>
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <label class="toggle-pill baseline-pill" title="Run Step 3 once with no improve loop (for baseline comparison)">
+        <input type="checkbox" id="toggle-baseline" />
+        <span class="pill-track"></span>
+        <span class="pill-label">Baseline (Single Call)</span>
+      </label>
+
+      <label class="toggle-pill" title="Enable Step 5: Iterative fix loop with gemini-4-hydrogen">
+        <input type="checkbox" id="toggle-improve" checked />
+        <span class="pill-track"></span>
+        <span class="pill-label">Improve Loop</span>
+      </label>
+
+      <label class="toggle-pill" title="Enable Step 6: Yosys synth_xilinx LUT & Flip-Flop report">
+        <input type="checkbox" id="toggle-synthesis" checked />
+        <span class="pill-track"></span>
+        <span class="pill-label">Synthesis Report</span>
+      </label>
+
+      <button id="btn-history" class="btn-ghost" type="button">Saved Runs</button>
+    </div>
+  </header>
+
+  <!-- Live 7-Stage Pipeline Progress Bar -->
+  <nav class="stepper" aria-label="Pipeline Progress">
+    <div class="step-pill" data-step="input">
+      <span class="step-num">1</span>
+      <span class="step-name">Input</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-pill" data-step="gate">
+      <span class="step-num">2</span>
+      <span class="step-name">Gate</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-pill" data-step="generate">
+      <span class="step-num">3</span>
+      <span class="step-name">Generate</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-pill" data-step="test">
+      <span class="step-num">4</span>
+      <span class="step-name">Test</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-pill" data-step="improve">
+      <span class="step-num">5</span>
+      <span class="step-name">Improve</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-pill" data-step="synthesis">
+      <span class="step-num">6</span>
+      <span class="step-name">Synthesis</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-pill" data-step="board">
+      <span class="step-num">7</span>
+      <span class="step-name">Virtual Board</span>
+    </div>
+  </nav>
+
+  <!-- Main Workspace -->
+  <main class="workspace">
+    <!-- Left Column: Input + Live Pipeline Stages -->
+    <section class="pipeline-col">
+      <!-- Stage 1: Input -->
+      <article class="card stage-card" id="card-input">
+        <div class="card-header">
+          <div class="card-title-row">
+            <span class="badge-step">STEP 1</span>
+            <h2>Circuit Input</h2>
+          </div>
+          <div class="input-tabs" role="tablist">
+            <button type="button" class="tab-btn active" data-tab="photo">Photo / Camera</button>
+            <button type="button" class="tab-btn" data-tab="text">Typed Description</button>
+          </div>
+        </div>
+
+        <!-- Photo / Camera Panel -->
+        <div id="panel-photo" class="tab-panel active">
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="file-input" accept="image/*" capture="environment" hidden />
+            <div id="dropzone-empty" class="dropzone-empty">
+              <div class="drop-icon">📷</div>
+              <p class="drop-main">Drop a circuit photo here, or click to upload</p>
+              <p class="drop-sub">Hand-drawn logic gates, FSMs, counters, adders, truth tables</p>
+              <div class="drop-actions">
+                <button type="button" id="btn-choose-file" class="btn-secondary">Upload Photo</button>
+                <button type="button" id="btn-open-camera" class="btn-secondary">Use Camera</button>
+              </div>
+            </div>
+
+            <div id="camera-view" class="camera-view hidden">
+              <video id="camera-video" autoplay playsinline muted></video>
+              <div class="camera-actions">
+                <button type="button" id="btn-capture" class="btn-primary">Capture Photo</button>
+                <button type="button" id="btn-close-camera" class="btn-ghost">Cancel</button>
+              </div>
+            </div>
+
+            <div id="image-preview-wrap" class="image-preview-wrap hidden">
+              <img id="image-preview" alt="Uploaded circuit diagram" />
+              <button type="button" id="btn-clear-image" class="btn-clear" title="Remove photo">✕ Retake / Change</button>
+            </div>
+          </div>
+
+          <input
+            type="text"
+            id="photo-note"
+            class="text-input-sm"
+            placeholder="Optional note (e.g. '4-bit up-counter, reset on center button')"
+          />
+        </div>
+
+        <!-- Text Description Panel -->
+        <div id="panel-text" class="tab-panel">
+          <textarea
+            id="text-prompt"
+            class="textarea-lg"
+            rows="4"
+            placeholder="Describe a digital circuit (e.g. '4-bit binary up-counter with synchronous reset on btn[0] and enable on sw[0]. Show the count on led[3:0] and in hex on the rightmost 7-segment digit.')"
+          ></textarea>
+        </div>
+
+        <div class="run-bar">
+          <button type="button" id="btn-run" class="btn-primary btn-run">
+            <span id="btn-run-label">Build Virtual Hardware</span>
+          </button>
+          <span id="run-timer" class="run-timer"></span>
+        </div>
+      </article>
+
+      <!-- Stage 2: Decision Gate -->
+      <article class="card stage-card hidden" id="card-gate">
+        <div class="card-header">
+          <div class="card-title-row">
+            <span class="badge-step">STEP 2</span>
+            <h2>Readability Gate</h2>
+            <span class="model-tag" id="tag-model-gate">gemini-decision-1</span>
+          </div>
+          <span class="status-badge" id="status-gate">Waiting</span>
+        </div>
+        <div class="card-body" id="body-gate"></div>
+      </article>
+
+      <!-- Stage 3: Generate Verilog -->
+      <article class="card stage-card hidden" id="card-generate">
+        <div class="card-header">
+          <div class="card-title-row">
+            <span class="badge-step">STEP 3</span>
+            <h2>Verilog Generation</h2>
+            <span class="model-tag" id="tag-model-generate">gemini-4-neon</span>
+          </div>
+          <span class="status-badge" id="status-generate">Waiting</span>
+        </div>
+        <div class="card-body" id="body-generate"></div>
+      </article>
+
+      <!-- Stage 4: Icarus Verilog Test -->
+      <article class="card stage-card hidden" id="card-test">
+        <div class="card-header">
+          <div class="card-title-row">
+            <span class="badge-step">STEP 4</span>
+            <h2>Simulation &amp; Testbench</h2>
+            <span class="model-tag">iverilog + vvp</span>
+          </div>
+          <span class="status-badge" id="status-test">Waiting</span>
+        </div>
+        <div class="card-body" id="body-test"></div>
+      </article>
+
+      <!-- Stage 5: Improve Loop -->
+      <article class="card stage-card hidden" id="card-improve">
+        <div class="card-header">
+          <div class="card-title-row">
+            <span class="badge-step">STEP 5</span>
+            <h2>Improve Loop</h2>
+            <span class="model-tag" id="tag-model-improve">gemini-4-hydrogen</span>
+          </div>
+          <span class="status-badge" id="status-improve">Waiting</span>
+        </div>
+        <div class="card-body" id="body-improve"></div>
+      </article>
+
+      <!-- Stage 6: Synthesis Report -->
+      <article class="card stage-card hidden" id="card-synthesis">
+        <div class="card-header">
+          <div class="card-title-row">
+            <span class="badge-step">STEP 6</span>
+            <h2>FPGA Synthesis Report</h2>
+            <span class="model-tag">yosys synth_xilinx</span>
+          </div>
+          <span class="status-badge" id="status-synthesis">Waiting</span>
+        </div>
+        <div class="card-body" id="body-synthesis"></div>
+      </article>
+    </section>
+
+    <!-- Right Column: Sticky Virtual FPGA Board -->
+    <section class="board-col">
+      <div class="card board-shell">
+        <div class="card-header">
+          <div class="card-title-row">
+            <span class="badge-step">STEP 7</span>
+            <h2 id="board-title">Virtual FPGA Board</h2>
+          </div>
+          <span class="status-badge idle" id="status-board">Ready</span>
+        </div>
+
+        <!-- 2D PCB Board -->
+        <div class="fpga-pcb" id="fpga-pcb">
+          <!-- PCB Top Header -->
+          <div class="pcb-top">
+            <div class="pcb-label-block">
+              <div class="pcb-silkscreen">FPGA-16 VIRTUAL DEV BOARD</div>
+              <div class="pcb-subsilk">LIVE ICARUS VERILOG SIMULATION</div>
+            </div>
+            <div class="pcb-status-leds">
+              <div class="mini-led-wrap">
+                <span class="mini-led on"></span>
+                <span>PWR</span>
+              </div>
+              <div class="mini-led-wrap">
+                <span class="mini-led" id="led-sim-live"></span>
+                <span>LIVE</span>
+              </div>
+              <div class="mini-led-wrap">
+                <span class="mini-led" id="led-clk-pulse"></span>
+                <span>CLK</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Middle Hardware Row: 7-Segment Display + D-Pad Buttons -->
+          <div class="pcb-mid">
+            <!-- 4-Digit 7-Segment Display -->
+            <div class="sevenseg-bezel">
+              <div class="bezel-label">4-DIGIT 7-SEGMENT DISPLAY (seg[6:0], an[3:0])</div>
+              <div class="sevenseg-digits" id="sevenseg-digits">
+                <!-- 4 SVG digits generated by app.js (Digit 3 .. Digit 0) -->
+              </div>
+            </div>
+
+            <!-- 5 Pushbuttons (Cross Layout) -->
+            <div class="btn-pad-wrap">
+              <div class="bezel-label">PUSHBUTTONS (btn[4:0])</div>
+              <div class="btn-dpad">
+                <button type="button" class="fpga-btn btn-up" data-btn="1" title="btn[1] Up">
+                  <span>U</span><small>B1</small>
+                </button>
+                <button type="button" class="fpga-btn btn-left" data-btn="2" title="btn[2] Left">
+                  <span>L</span><small>B2</small>
+                </button>
+                <button type="button" class="fpga-btn btn-center" data-btn="0" title="btn[0] Center (Reset)">
+                  <span>C</span><small>B0</small>
+                </button>
+                <button type="button" class="fpga-btn btn-right" data-btn="3" title="btn[3] Right">
+                  <span>R</span><small>B3</small>
+                </button>
+                <button type="button" class="fpga-btn btn-down" data-btn="4" title="btn[4] Down">
+                  <span>D</span><small>B4</small>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clock Controls Strip -->
+          <div class="clock-strip">
+            <button type="button" id="btn-clk-toggle" class="btn-clk" disabled>▶ Run Clock</button>
+            <button type="button" id="btn-clk-step" class="btn-clk-sm" disabled>+1 CLK</button>
+            <label class="speed-control">
+              <span>Speed: <strong id="clk-hz-label">4 Hz</strong></span>
+              <input type="range" id="clk-hz-slider" min="1" max="15" value="4" />
+            </label>
+            <span class="cycle-counter">Cycles: <strong id="cycle-count">0</strong></span>
+          </div>
+
+          <!-- 16 LEDs + 16 Switches -->
+          <div class="io-bank">
+            <div class="io-bank-header">
+              <span>LEDs (led[15:0]) &amp; SLIDE SWITCHES (sw[15:0])</span>
+              <button type="button" id="btn-reset-sw" class="btn-link" disabled>Clear Switches</button>
+            </div>
+            <div class="led-row" id="led-row"></div>
+            <div class="sw-row" id="sw-row"></div>
+          </div>
+        </div>
+
+        <!-- Pin Mapping Legend -->
+        <div class="pin-map-box" id="pin-map-box">
+          <h3>Board Pin Mapping</h3>
+          <p class="muted">Run a circuit on the left to load it onto the virtual FPGA board. Click any switch or pushbutton to interact with the live Verilog simulation.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Saved Runs Modal -->
+  <div id="history-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Saved Runs (<code>app/runs/</code>)</h2>
+        <button type="button" id="btn-close-history" class="btn-ghost">Close</button>
+      </div>
+      <div id="history-list" class="history-list"></div>
+    </div>
+  </div>
+
+  <canvas id="capture-canvas" hidden></canvas>
+  <script src="/static/app.js"></script>
+</body>
+</html>

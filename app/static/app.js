@@ -1,0 +1,864 @@
+/* Paper -> FPGA Frontend Controller
+ * Handles photo/camera/text input, live SSE pipeline streaming,
+ * and real-time interactive virtual FPGA board simulation.
+ */
+
+const state = {
+  inputMode: "photo", // "photo" | "text"
+  imageB64: null,
+  mimeType: "image/jpeg",
+  cameraStream: null,
+  running: false,
+
+  // Virtual FPGA Board state
+  boardSessionId: null,
+  sw: 0,           // 16-bit integer
+  btn: 0,          // 5-bit integer
+  led: 0,          // 16-bit integer
+  digits: [0x7f, 0x7f, 0x7f, 0x7f], // active-low 7-bit per digit [d0..d3]
+  clockRunning: false,
+  clockHz: 4,
+  clockTimer: null,
+  stepInFlight: false,
+  pendingSync: false,
+};
+
+// DOM refs
+const $ = (id) => document.getElementById(id);
+
+// --- Initialization ---
+async function init() {
+  buildVirtualBoardDOM();
+  bindInputEvents();
+  bindToggleEvents();
+  bindBoardEvents();
+  bindHistoryModal();
+
+  // Fetch active model IDs from single config file on backend
+  try {
+    const res = await fetch("/api/config");
+    if (res.ok) {
+      const cfg = await res.json();
+      if (cfg.models) {
+        $("tag-model-gate").textContent = cfg.models.gate;
+        $("tag-model-generate").textContent = cfg.models.generate;
+        $("tag-model-improve").textContent = cfg.models.improve;
+      }
+    }
+  } catch (_) {}
+}
+
+// --- Build 2D Virtual FPGA Board DOM ---
+function buildVirtualBoardDOM() {
+  // 4-Digit 7-Segment Display: left-to-right is Digit 3, Digit 2, Digit 1, Digit 0
+  const digitsWrap = $("sevenseg-digits");
+  digitsWrap.innerHTML = "";
+  for (let d = 3; d >= 0; d--) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 60 100");
+    svg.classList.add("digit-svg");
+    svg.dataset.digit = String(d);
+    // Standard segment polygons: 0=a(top), 1=b(tr), 2=c(br), 3=d(bot), 4=e(bl), 5=f(tl), 6=g(mid)
+    const segPolys = [
+      "12,6 48,6 42,14 18,14",       // a (0)
+      "50,8 55,14 52,46 46,42 48,15",// b (1)
+      "46,54 51,50 48,86 43,92 41,84 44,58", // c (2)
+      "16,86 42,86 46,94 10,94",     // d (3)
+      "9,50 14,54 12,84 6,90 8,54",  // e (4)
+      "12,8 17,15 15,42 9,46 7,14",  // f (5)
+      "16,46 44,46 48,50 44,54 16,54 12,50", // g (6)
+    ];
+    segPolys.forEach((pts, idx) => {
+      const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      poly.setAttribute("points", pts);
+      poly.classList.add("seg-path");
+      poly.dataset.seg = String(idx);
+      svg.appendChild(poly);
+    });
+    digitsWrap.appendChild(svg);
+  }
+
+  // 16 LEDs (LED15 left -> LED0 right)
+  const ledRow = $("led-row");
+  ledRow.innerHTML = "";
+  for (let i = 15; i >= 0; i--) {
+    const cell = document.createElement("div");
+    cell.className = "led-cell";
+    cell.innerHTML = `<div class="led-bulb" id="led-${i}" title="led[${i}]"></div><span class="io-idx">${i}</span>`;
+    ledRow.appendChild(cell);
+  }
+
+  // 16 Switches (SW15 left -> SW0 right)
+  const swRow = $("sw-row");
+  swRow.innerHTML = "";
+  for (let i = 15; i >= 0; i--) {
+    const cell = document.createElement("div");
+    cell.className = "sw-cell";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "sw-toggle";
+    btn.id = `sw-${i}`;
+    btn.title = `Toggle sw[${i}]`;
+    btn.dataset.bit = String(i);
+    btn.innerHTML = `<div class="sw-knob"></div>`;
+    btn.addEventListener("click", () => toggleSwitch(i));
+    const lbl = document.createElement("span");
+    lbl.className = "io-idx";
+    lbl.textContent = `S${i}`;
+    cell.appendChild(btn);
+    cell.appendChild(lbl);
+    swRow.appendChild(cell);
+  }
+}
+
+// --- Input Events (Upload, Drag-Drop, Camera, Text) ---
+function bindInputEvents() {
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.tab;
+      state.inputMode = tab;
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      $("panel-photo").classList.toggle("active", tab === "photo");
+      $("panel-text").classList.toggle("active", tab === "text");
+      if (tab !== "photo") stopCamera();
+    });
+  });
+
+  const fileInput = $("file-input");
+  const dropzone = $("dropzone");
+
+  $("btn-choose-file").addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (file) loadImageFile(file);
+  });
+
+  dropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropzone.classList.add("dragover");
+  });
+  dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("dragover");
+    const file = e.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith("image/")) loadImageFile(file);
+  });
+
+  $("btn-open-camera").addEventListener("click", openCamera);
+  $("btn-close-camera").addEventListener("click", stopCamera);
+  $("btn-capture").addEventListener("click", captureCameraFrame);
+  $("btn-clear-image").addEventListener("click", clearImage);
+
+  $("btn-run").addEventListener("click", startPipeline);
+}
+
+function loadImageFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = String(reader.result || "");
+    const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (!match) return;
+    state.mimeType = match[1];
+    state.imageB64 = match[2];
+    showImagePreview(dataUrl);
+  };
+  reader.readAsDataURL(file);
+}
+
+function showImagePreview(dataUrl) {
+  stopCamera();
+  $("image-preview").src = dataUrl;
+  $("dropzone-empty").classList.add("hidden");
+  $("image-preview-wrap").classList.remove("hidden");
+}
+
+function clearImage() {
+  state.imageB64 = null;
+  $("file-input").value = "";
+  $("image-preview").src = "";
+  $("image-preview-wrap").classList.add("hidden");
+  $("dropzone-empty").classList.remove("hidden");
+}
+
+async function openCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert("Camera API is not available in this browser. Please use Upload Photo instead.");
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false,
+    });
+    state.cameraStream = stream;
+    $("camera-video").srcObject = stream;
+    $("dropzone-empty").classList.add("hidden");
+    $("image-preview-wrap").classList.add("hidden");
+    $("camera-view").classList.remove("hidden");
+  } catch (err) {
+    alert("Could not access camera: " + err.message);
+  }
+}
+
+function stopCamera() {
+  if (state.cameraStream) {
+    state.cameraStream.getTracks().forEach((t) => t.stop());
+    state.cameraStream = null;
+  }
+  $("camera-view").classList.add("hidden");
+  if (!state.imageB64) {
+    $("dropzone-empty").classList.remove("hidden");
+  }
+}
+
+function captureCameraFrame() {
+  const video = $("camera-video");
+  const canvas = $("capture-canvas");
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (match) {
+    state.mimeType = match[1];
+    state.imageB64 = match[2];
+    showImagePreview(dataUrl);
+  }
+}
+
+// --- Toggles ---
+function bindToggleEvents() {
+  const baseline = $("toggle-baseline");
+  const improve = $("toggle-improve");
+  const improvePill = improve.closest(".toggle-pill");
+
+  const syncBaselineUI = () => {
+    if (baseline.checked) {
+      improve.checked = false;
+      improvePill.classList.add("disabled");
+    } else {
+      improvePill.classList.remove("disabled");
+    }
+  };
+  baseline.addEventListener("change", syncBaselineUI);
+  syncBaselineUI();
+}
+
+// --- Stepper & Stage Card Helpers ---
+function setStepper(stepName, status) {
+  const pill = document.querySelector(`.step-pill[data-step="${stepName}"]`);
+  if (!pill) return;
+  pill.classList.remove("running", "done", "error", "rejected", "skipped");
+  if (status) pill.classList.add(status);
+}
+
+function setCardStatus(stage, status, label) {
+  const card = $(`card-${stage}`);
+  if (card) card.classList.remove("hidden");
+  const badge = $(`status-${stage}`);
+  if (badge) {
+    badge.className = `status-badge ${status}`;
+    badge.textContent = label;
+  }
+  setStepper(stage, status);
+}
+
+function resetPipelineUI() {
+  ["gate", "generate", "test", "improve", "synthesis"].forEach((s) => {
+    $(`card-${s}`).classList.add("hidden");
+    $(`body-${s}`).innerHTML = "";
+    setStepper(s, "");
+  });
+  setStepper("input", "done");
+  setStepper("board", "");
+  stopClock();
+}
+
+// --- Run Pipeline (SSE Stream) ---
+async function startPipeline() {
+  if (state.running) return;
+
+  const payload = {
+    baseline_mode: $("toggle-baseline").checked,
+    enable_improve: $("toggle-improve").checked,
+    enable_synthesis: $("toggle-synthesis").checked,
+  };
+
+  if (state.inputMode === "photo") {
+    if (!state.imageB64) {
+      alert("Please upload or capture a photo of a circuit diagram first (or switch to Typed Description).");
+      return;
+    }
+    payload.image_b64 = state.imageB64;
+    payload.mime_type = state.mimeType;
+    const note = $("photo-note").value.trim();
+    if (note) payload.text_prompt = note;
+  } else {
+    const desc = $("text-prompt").value.trim();
+    if (!desc) {
+      alert("Please type a circuit description first.");
+      return;
+    }
+    payload.text_prompt = desc;
+  }
+
+  state.running = true;
+  $("btn-run").disabled = true;
+  $("btn-run-label").textContent = "Running Pipeline...";
+  resetPipelineUI();
+
+  const t0 = performance.now();
+  const timerInterval = setInterval(() => {
+    $("run-timer").textContent = `${((performance.now() - t0) / 1000).toFixed(1)}s`;
+  }, 100);
+
+  try {
+    const response = await fetch("/api/pipeline/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: response.statusText }));
+      throw new Error(err.error || "Pipeline request failed");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const chunks = buffer.split("\n\n");
+      buffer = chunks.pop() || "";
+
+      for (const chunk of chunks) {
+        const lines = chunk.split("\n");
+        let eventName = "message";
+        let dataStr = "";
+        for (const line of lines) {
+          if (line.startsWith("event:")) eventName = line.slice(6).trim();
+          else if (line.startsWith("data:")) dataStr += line.slice(5).trim();
+        }
+        if (!dataStr) continue;
+        const data = JSON.parse(dataStr);
+        handleSSEEvent(eventName, data);
+      }
+    }
+  } catch (err) {
+    alert("Pipeline error: " + err.message);
+  } finally {
+    clearInterval(timerInterval);
+    state.running = false;
+    $("btn-run").disabled = false;
+    $("btn-run-label").textContent = "Build Virtual Hardware";
+  }
+}
+
+function handleSSEEvent(eventName, payload) {
+  if (eventName === "error") {
+    alert("Backend error: " + payload.message);
+    return;
+  }
+  if (eventName === "complete") {
+    $("run-timer").textContent = `${(payload.total_duration_ms / 1000).toFixed(1)}s • Saved ${payload.log_file}`;
+    return;
+  }
+  if (eventName !== "stage") return;
+
+  const { stage, status, data } = payload;
+
+  if (stage === "gate") renderGateStage(status, data);
+  else if (stage === "generate") renderGenerateStage(status, data);
+  else if (stage === "test") renderTestStage(status, data);
+  else if (stage === "improve") renderImproveStage(status, data);
+  else if (stage === "synthesis") renderSynthesisStage(status, data);
+  else if (stage === "board") renderBoardStage(status, data);
+}
+
+// --- Stage Renderers ---
+function renderGateStage(status, data) {
+  if (status === "running") {
+    setCardStatus("gate", "running", "Evaluating...");
+    $("body-gate").innerHTML = `<p class="muted">Checking readability and classifying circuit type with Decision 1...</p>`;
+    return;
+  }
+
+  const passed = status === "done";
+  setCardStatus("gate", passed ? "done" : "rejected", passed ? "Passed" : "Retake Needed");
+
+  const readPct = Math.round((data.readable_prob || 0) * 100);
+  const confPct = Math.round((data.readable_confidence || 0) * 100);
+  const typeConfPct = Math.round((data.type_confidence || 0) * 100);
+
+  let probsHtml = "";
+  if (data.type_probabilities) {
+    probsHtml = Object.entries(data.type_probabilities)
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => {
+        const pct = Math.round(v * 100);
+        return `
+          <div class="conf-row">
+            <span class="conf-row-label">${escapeHtml(k)}</span>
+            <div class="conf-track"><div class="conf-fill" style="width:${pct}%"></div></div>
+            <span class="conf-pct">${pct}%</span>
+          </div>`;
+      })
+      .join("");
+  }
+
+  $("body-gate").innerHTML = `
+    <div class="metric-grid">
+      <div class="metric-tile">
+        <div class="metric-label">Readable Circuit</div>
+        <div class="metric-value ${passed ? "green" : "red"}">${readPct}%</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Gate Confidence</div>
+        <div class="metric-value cyan">${confPct}%</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Circuit Type</div>
+        <div class="metric-value" style="font-size:1.08rem;font-family:var(--font-sans)">${escapeHtml(data.circuit_type_label)} <small style="color:var(--muted)">(${typeConfPct}%)</small></div>
+      </div>
+    </div>
+    <div class="conf-bar-wrap">${probsHtml}</div>
+    <div class="alert-box ${passed ? "success" : "danger"}">${escapeHtml(data.reason)}</div>
+  `;
+}
+
+function renderGenerateStage(status, data) {
+  if (status === "running") {
+    setCardStatus("generate", "running", "Generating Verilog...");
+    $("body-generate").innerHTML = `<p class="muted">Reading diagram, mapping virtual board pins, and writing synthesizable Verilog + testbench...</p>`;
+    return;
+  }
+
+  setCardStatus("generate", "done", `Done (${(data.duration_ms / 1000).toFixed(1)}s)`);
+  $("body-generate").innerHTML = `
+    <h3 style="margin:0 0 6px;font-size:1.15rem">${escapeHtml(data.circuit_name)}</h3>
+    <p class="muted" style="margin-bottom:10px">${escapeHtml(data.design_summary)}</p>
+    <details class="code-details">
+      <summary>View Verilog Design (design.v)</summary>
+      <pre id="code-verilog">${escapeHtml(data.verilog_code)}</pre>
+    </details>
+    <details class="code-details">
+      <summary>View Self-Checking Testbench (tb.v)</summary>
+      <pre id="code-tb">${escapeHtml(data.testbench_code)}</pre>
+    </details>
+  `;
+  renderPinMapping(data.pin_mapping || []);
+}
+
+function renderTestStage(status, data) {
+  if (status === "running") {
+    setCardStatus("test", "running", "Compiling & Simulating...");
+    $("body-test").innerHTML = `<p class="muted">Running Icarus Verilog (iverilog + vvp)...</p>`;
+    return;
+  }
+
+  const ok = !!data.passed;
+  setCardStatus("test", ok ? "done" : "error", ok ? "PASS" : "FAIL");
+  const logOutput = [data.stdout, data.stderr].filter(Boolean).join("\n\n") || "(no output)";
+
+  $("body-test").innerHTML = `
+    <div class="metric-grid">
+      <div class="metric-tile">
+        <div class="metric-label">Result</div>
+        <div class="metric-value ${ok ? "green" : "red"}">${ok ? "PASS" : "FAIL"}</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Board Ports</div>
+        <div class="metric-value ${data.board_interface_ok ? "green" : "red"}">${data.board_interface_ok ? "OK" : "ERR"}</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Sim Time</div>
+        <div class="metric-value cyan">${data.duration_ms}ms</div>
+      </div>
+    </div>
+    <p class="muted">${escapeHtml(data.summary)}</p>
+    <details class="code-details" ${ok ? "" : "open"}>
+      <summary>Compiler &amp; Simulation Output</summary>
+      <pre>${escapeHtml(logOutput)}</pre>
+    </details>
+  `;
+}
+
+function renderImproveStage(status, data) {
+  if (status === "skipped") {
+    setCardStatus("improve", "skipped", "Skipped");
+    $("body-improve").innerHTML = `<p class="muted">${escapeHtml(data.reason)}</p>`;
+    return;
+  }
+  if (status === "running") {
+    setCardStatus("improve", "running", "Fixing Errors...");
+    $("body-improve").innerHTML = `<div id="improve-rounds-list"></div><p class="muted" id="improve-working">Sending errors back to model (up to 5 rounds)...</p>`;
+    return;
+  }
+  if (status === "round") {
+    const list = $("improve-rounds-list") || $("body-improve");
+    const item = document.createElement("div");
+    item.className = "round-item";
+    const ok = !!data.passed;
+    item.innerHTML = `
+      <div class="round-head">
+        <span>Round ${data.round}</span>
+        <span class="status-badge ${ok ? "done" : "error"}">${ok ? "PASS" : "FAIL"} (${(data.duration_ms / 1000).toFixed(1)}s)</span>
+      </div>
+      <p class="muted">${escapeHtml(data.fix_summary)}</p>
+    `;
+    list.appendChild(item);
+    return;
+  }
+  if (status === "done") {
+    const working = $("improve-working");
+    if (working) working.remove();
+    const ok = !!data.passed;
+    setCardStatus("improve", ok ? "done" : "error", ok ? `Fixed (${data.rounds_used}r)` : `Failed (${data.rounds_used}r)`);
+    if (data.final_verilog && $("code-verilog")) {
+      $("code-verilog").textContent = data.final_verilog;
+    }
+    if (data.final_testbench && $("code-tb")) {
+      $("code-tb").textContent = data.final_testbench;
+    }
+  }
+}
+
+function renderSynthesisStage(status, data) {
+  if (status === "skipped") {
+    setCardStatus("synthesis", "skipped", "Skipped");
+    $("body-synthesis").innerHTML = `<p class="muted">${escapeHtml(data.reason)}</p>`;
+    return;
+  }
+  if (status === "running") {
+    setCardStatus("synthesis", "running", "Synthesizing...");
+    $("body-synthesis").innerHTML = `<p class="muted">Running Yosys synth_xilinx on module top...</p>`;
+    return;
+  }
+
+  if (!data.ok) {
+    setCardStatus("synthesis", "error", "Failed");
+    $("body-synthesis").innerHTML = `<div class="alert-box danger">${escapeHtml(data.error || "Synthesis failed")}</div>`;
+    return;
+  }
+
+  setCardStatus("synthesis", "done", `Done (${(data.duration_ms / 1000).toFixed(1)}s)`);
+  const pills = Object.entries(data.cells_by_type || {})
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => `<span class="cell-pill">${escapeHtml(k)}: <strong>${v}</strong></span>`)
+    .join("");
+
+  $("body-synthesis").innerHTML = `
+    <div class="metric-grid">
+      <div class="metric-tile">
+        <div class="metric-label">LUTs</div>
+        <div class="metric-value cyan">${data.luts}</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Flip-Flops</div>
+        <div class="metric-value green">${data.ffs}</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Carry Chains</div>
+        <div class="metric-value amber">${data.carries}</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Total Cells</div>
+        <div class="metric-value">${data.total_cells}</div>
+      </div>
+    </div>
+    <div class="cell-pills">${pills}</div>
+  `;
+}
+
+function renderBoardStage(status, data) {
+  if (status === "running") {
+    setStepper("board", "running");
+    $("status-board").className = "status-badge running";
+    $("status-board").textContent = "Loading...";
+    return;
+  }
+  if (status === "error") {
+    setStepper("board", "error");
+    $("status-board").className = "status-badge error";
+    $("status-board").textContent = "Unavailable";
+    $("led-sim-live").classList.remove("on");
+    return;
+  }
+
+  // Board is LIVE!
+  state.boardSessionId = data.session_id;
+  state.sw = 0;
+  state.btn = 0;
+  syncSwitchDOM();
+
+  setStepper("board", "done");
+  $("status-board").className = "status-badge done";
+  $("status-board").textContent = "LIVE";
+  $("board-title").textContent = data.circuit_name ? `Virtual Board — ${data.circuit_name}` : "Virtual FPGA Board";
+  $("led-sim-live").classList.add("on");
+
+  $("btn-clk-toggle").disabled = false;
+  $("btn-clk-step").disabled = false;
+  $("btn-reset-sw").disabled = false;
+
+  applyBoardOutputs(data);
+  if (data.pin_mapping) renderPinMapping(data.pin_mapping);
+
+  // Auto-start clock for clocked designs so judges immediately see counters/FSMs running!
+  const hz = Math.max(1, Math.min(15, data.recommended_clock_hz || 4));
+  state.clockHz = hz;
+  $("clk-hz-slider").value = String(hz);
+  $("clk-hz-label").textContent = `${hz} Hz`;
+
+  if (data.is_clocked) {
+    startClock();
+  } else {
+    stopClock();
+  }
+}
+
+function renderPinMapping(items) {
+  const box = $("pin-map-box");
+  if (!items || !items.length) {
+    box.innerHTML = `<h3>Board Pin Mapping</h3><p class="muted">No pin mapping provided.</p>`;
+    return;
+  }
+  const rows = items
+    .map(
+      (p) => `
+      <tr>
+        <td><span class="pin-chip">${escapeHtml(p.board_pin)}</span></td>
+        <td><strong>${escapeHtml(p.signal_name)}</strong></td>
+        <td class="${p.direction === "input" ? "dir-in" : "dir-out"}">${escapeHtml(p.direction)}</td>
+        <td>${escapeHtml(p.description)}</td>
+      </tr>`
+    )
+    .join("");
+
+  box.innerHTML = `
+    <h3>Board Pin Mapping</h3>
+    <table class="pin-table">
+      <thead><tr><th>Board Pin</th><th>Signal</th><th>Dir</th><th>Behavior</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+// --- Interactive Virtual FPGA Board Controls ---
+function bindBoardEvents() {
+  // 5 Pushbuttons: press & release
+  document.querySelectorAll(".fpga-btn").forEach((el) => {
+    const bit = Number(el.dataset.btn);
+    const press = (e) => {
+      e.preventDefault();
+      el.classList.add("pressed");
+      state.btn |= 1 << bit;
+      // If clock is paused, advance 1 cycle on button press for synchronous resets/inputs?
+      // Better: evaluate immediately (0 cycles) so combinational & held-button work,
+      // and if clock is running it naturally clocks while held!
+      sendBoardStep(0);
+    };
+    const release = () => {
+      if (!el.classList.contains("pressed")) return;
+      el.classList.remove("pressed");
+      state.btn &= ~(1 << bit);
+      sendBoardStep(0);
+    };
+    el.addEventListener("pointerdown", press);
+    el.addEventListener("pointerup", release);
+    el.addEventListener("pointerleave", release);
+    el.addEventListener("pointercancel", release);
+  });
+
+  $("btn-clk-toggle").addEventListener("click", () => {
+    if (state.clockRunning) stopClock();
+    else startClock();
+  });
+
+  $("btn-clk-step").addEventListener("click", () => sendBoardStep(1));
+
+  $("clk-hz-slider").addEventListener("input", (e) => {
+    state.clockHz = Number(e.target.value);
+    $("clk-hz-label").textContent = `${state.clockHz} Hz`;
+    if (state.clockRunning) {
+      stopClock();
+      startClock();
+    }
+  });
+
+  $("btn-reset-sw").addEventListener("click", () => {
+    state.sw = 0;
+    syncSwitchDOM();
+    sendBoardStep(0);
+  });
+}
+
+function toggleSwitch(bit) {
+  state.sw ^= 1 << bit;
+  syncSwitchDOM();
+  sendBoardStep(0);
+}
+
+function syncSwitchDOM() {
+  for (let i = 0; i < 16; i++) {
+    const el = $(`sw-${i}`);
+    if (el) el.classList.toggle("on", Boolean(state.sw & (1 << i)));
+  }
+}
+
+function startClock() {
+  if (!state.boardSessionId) return;
+  stopClock();
+  state.clockRunning = true;
+  $("btn-clk-toggle").textContent = "⏸ Pause Clock";
+  $("btn-clk-toggle").classList.add("running");
+
+  const intervalMs = Math.max(60, Math.round(1000 / state.clockHz));
+  state.clockTimer = setInterval(() => {
+    if (!state.stepInFlight) {
+      sendBoardStep(1);
+    }
+  }, intervalMs);
+}
+
+function stopClock() {
+  if (state.clockTimer) {
+    clearInterval(state.clockTimer);
+    state.clockTimer = null;
+  }
+  state.clockRunning = false;
+  $("btn-clk-toggle").textContent = "▶ Run Clock";
+  $("btn-clk-toggle").classList.remove("running");
+  $("led-clk-pulse").classList.remove("pulse");
+}
+
+async function sendBoardStep(cycles) {
+  if (!state.boardSessionId) return;
+  if (state.stepInFlight) {
+    state.pendingSync = true;
+    return;
+  }
+
+  state.stepInFlight = true;
+  if (cycles > 0) {
+    $("led-clk-pulse").classList.toggle("pulse");
+  }
+
+  try {
+    const res = await fetch("/api/board/step", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: state.boardSessionId,
+        sw: state.sw,
+        btn: state.btn,
+        cycles,
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      applyBoardOutputs(data);
+    }
+  } catch (_) {
+    // Ignore transient network errors during rapid clicking
+  } finally {
+    state.stepInFlight = false;
+    if (state.pendingSync) {
+      state.pendingSync = false;
+      sendBoardStep(0);
+    }
+  }
+}
+
+function applyBoardOutputs(data) {
+  state.led = data.led || 0;
+  for (let i = 0; i < 16; i++) {
+    const bulb = $(`led-${i}`);
+    if (bulb) bulb.classList.toggle("on", Boolean(state.led & (1 << i)));
+  }
+
+  const digits = data.digits || [0x7f, 0x7f, 0x7f, 0x7f];
+  state.digits = digits;
+  for (let d = 0; d < 4; d++) {
+    const svg = document.querySelector(`.digit-svg[data-digit="${d}"]`);
+    if (!svg) continue;
+    const segMask = digits[d]; // active-low: bit s == 0 means segment s is ON
+    svg.querySelectorAll(".seg-path").forEach((poly) => {
+      const s = Number(poly.dataset.seg);
+      const isLit = (segMask & (1 << s)) === 0;
+      poly.classList.toggle("lit", isLit);
+    });
+  }
+
+  if (typeof data.cycles === "number") {
+    $("cycle-count").textContent = String(data.cycles);
+  }
+}
+
+// --- Saved Runs Modal ---
+function bindHistoryModal() {
+  $("btn-history").addEventListener("click", async () => {
+    $("history-modal").classList.remove("hidden");
+    $("history-list").innerHTML = `<p class="muted">Loading saved runs...</p>`;
+    try {
+      const res = await fetch("/api/runs");
+      const data = await res.json();
+      const runs = data.runs || [];
+      if (!runs.length) {
+        $("history-list").innerHTML = `<p class="muted">No saved runs yet. Run a circuit to log it to <code>app/runs/</code>.</p>`;
+        return;
+      }
+      $("history-list").innerHTML = runs
+        .map((r) => {
+          const testBadge =
+            r.test_passed === true
+              ? `<span class="status-badge done">PASS</span>`
+              : r.test_passed === false
+              ? `<span class="status-badge error">FAIL</span>`
+              : `<span class="status-badge rejected">GATE</span>`;
+          const synthTxt =
+            r.luts != null ? `${r.luts} LUTs / ${r.ffs} FFs` : "—";
+          return `
+            <div class="history-row">
+              <div>
+                <strong>${escapeHtml(r.circuit_name || r.run_id)}</strong>
+                <div class="muted" style="font-size:0.82rem">
+                  ${escapeHtml(r.run_id)} • Mode: <strong>${escapeHtml(r.mode)}</strong> • Rounds: ${r.improve_rounds} • Synth: ${synthTxt}
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span class="muted" style="font-family:var(--font-mono);font-size:0.85rem">${((r.total_duration_ms || 0) / 1000).toFixed(1)}s</span>
+                ${testBadge}
+              </div>
+            </div>`;
+        })
+        .join("");
+    } catch (err) {
+      $("history-list").innerHTML = `<div class="alert-box danger">Failed to load runs: ${escapeHtml(err.message)}</div>`;
+    }
+  });
+
+  $("btn-close-history").addEventListener("click", () => {
+    $("history-modal").classList.add("hidden");
+  });
+  $("history-modal").addEventListener("click", (e) => {
+    if (e.target === $("history-modal")) $("history-modal").classList.add("hidden");
+  });
+}
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+document.addEventListener("DOMContentLoaded", init);

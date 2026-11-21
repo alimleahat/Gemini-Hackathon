@@ -1,0 +1,3 @@
+# Ignore saved run logs and uploaded images locally
+*.json
+images/
