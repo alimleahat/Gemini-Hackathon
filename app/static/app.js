@@ -229,6 +229,17 @@ function bindLiveCameraEvents() {
     $("ink-thresh-val").textContent = String(v);
     if (state.inkEngine) state.inkEngine.setThreshold(v);
   });
+  $("btn-clear-ink")?.addEventListener("click", () => {
+    if (state.inkEngine) state.inkEngine.clear();
+  });
+  $("btn-rotate-ink")?.addEventListener("click", () => {
+    if (!state.inkEngine) return;
+    const nextDeg = (state.inkEngine.getRotation() + 90) % 360;
+    state.inkEngine.setRotation(nextDeg);
+    state.inkEngine.clear();
+    $("btn-rotate-ink").textContent = `↻ ${nextDeg}°`;
+    $("live-video").style.transform = nextDeg ? `rotate(${nextDeg}deg)` : "";
+  });
   const toggleRaw = () => {
     state.showFullRawCam = !state.showFullRawCam;
     $("live-video").classList.toggle("full-raw", state.showFullRawCam);

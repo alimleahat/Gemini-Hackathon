@@ -90,6 +90,8 @@
           <span id="live-ink-fps" class="mini-pill">Idle</span>
           <span id="live-gate-pill" class="mini-pill">Gate: Idle</span>
           <span id="live-reader-pill" class="mini-pill">gemini-4-hydrogen</span>
+          <button type="button" id="btn-rotate-ink" class="btn-chip" title="Rotate canvas 90°">↻ 0°</button>
+          <button type="button" id="btn-clear-ink" class="btn-chip" title="Clear accumulated ink canvas">Clear Canvas</button>
           <button type="button" id="btn-toggle-raw-cam" class="btn-chip">Raw Cam</button>
           <button type="button" id="btn-close-vision" class="icon-btn sm" title="Hide Vision Overlay">✕</button>
         </div>
@@ -106,8 +108,8 @@
           </div>
           <div class="pane-footer">
             <label class="ink-slider-label">
-              <span>Threshold <strong id="ink-thresh-val">24</strong></span>
-              <input type="range" id="ink-thresh-slider" min="10" max="55" value="24" />
+              <span>Threshold <strong id="ink-thresh-val">28</strong></span>
+              <input type="range" id="ink-thresh-slider" min="10" max="55" value="28" />
             </label>
             <span id="live-frame-stats" class="stat-muted">0 frames</span>
           </div>
