@@ -90,9 +90,11 @@
           <span id="live-ink-fps" class="mini-pill">Idle</span>
           <span id="live-gate-pill" class="mini-pill">Gate: Idle</span>
           <span id="live-reader-pill" class="mini-pill">gemini-4-hydrogen</span>
+          <button type="button" id="btn-ink-mode" class="btn-chip active" title="Switch between Clean persistent canvas and Raw filtered ink">Clean Canvas</button>
+          <button type="button" id="btn-ink-debug" class="btn-chip" title="Show which filter removes strokes (Red=Hand, Orange=Blob, Purple=Ruled, Yellow=Dark)">Debug</button>
           <button type="button" id="btn-rotate-ink" class="btn-chip" title="Rotate camera, ink, and AI frames 90°">↻ 0°</button>
           <button type="button" id="btn-flip-ink" class="btn-chip" title="Mirror/flip camera, ink, and AI frames horizontally">⇄ Flip</button>
-          <button type="button" id="btn-clear-ink" class="btn-chip" title="Clear accumulated ink canvas">Clear Canvas</button>
+          <button type="button" id="btn-clear-ink" class="btn-chip" title="Clear accumulated ink canvas">Clear</button>
           <button type="button" id="btn-toggle-raw-cam" class="btn-chip">Raw Cam</button>
           <button type="button" id="btn-close-vision" class="icon-btn sm" title="Hide Vision Overlay">✕</button>
         </div>
@@ -109,8 +111,8 @@
           </div>
           <div class="pane-footer">
             <label class="ink-slider-label">
-              <span>Threshold <strong id="ink-thresh-val">28</strong></span>
-              <input type="range" id="ink-thresh-slider" min="10" max="55" value="28" />
+              <span>Threshold <strong id="ink-thresh-val">16</strong></span>
+              <input type="range" id="ink-thresh-slider" min="6" max="45" value="16" />
             </label>
             <span id="live-frame-stats" class="stat-muted">0 frames</span>
           </div>

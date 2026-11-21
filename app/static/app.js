@@ -282,6 +282,20 @@ function applyCameraOrientation(clearInk = false) {
   $("btn-clear-ink")?.addEventListener("click", () => {
     if (state.inkEngine) state.inkEngine.clear();
   });
+  $("btn-ink-mode")?.addEventListener("click", () => {
+    if (!state.inkEngine) return;
+    const next = state.inkEngine.getMode() === "clean" ? "raw" : "clean";
+    state.inkEngine.setMode(next);
+    const btn = $("btn-ink-mode");
+    btn.textContent = next === "clean" ? "Clean Canvas" : "Raw Ink";
+    btn.classList.toggle("active", next === "clean");
+  });
+  $("btn-ink-debug")?.addEventListener("click", () => {
+    if (!state.inkEngine) return;
+    const next = !state.inkEngine.getDebug();
+    state.inkEngine.setDebug(next);
+    $("btn-ink-debug").classList.toggle("active", next);
+  });
   $("btn-rotate-ink")?.addEventListener("click", () => {
     state.camRotation = (state.camRotation + 90) % 360;
     saveCameraOrientation();
