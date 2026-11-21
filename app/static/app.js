@@ -1031,21 +1031,21 @@ function renderGateStage(status, data) {
     return;
   }
 
+  const readPct = Math.round((data.readable_prob || 0) * 100);
+  const confPct = Math.round((data.readable_confidence || 0) * 100);
+  const typeConfPct = Math.round((data.type_confidence || 0) * 100);
+
   const passed = status === "done";
   const isWarning = status === "warning";
   const isRejected = status === "rejected";
   setCardStatus(
     "gate",
     passed ? "done" : isWarning ? "running" : "rejected",
-    passed ? "Pass" : isWarning ? "Low Conf" : "Blocked (<15%)"
+    passed ? "Pass" : isWarning ? "Low Conf" : readPct < 15 ? "Blocked (<15%)" : "Stopped"
   );
   if (data.duration_ms != null) {
     setStageTiming("gate", `${(data.duration_ms / 1000).toFixed(1)}s`);
   }
-
-  const readPct = Math.round((data.readable_prob || 0) * 100);
-  const confPct = Math.round((data.readable_confidence || 0) * 100);
-  const typeConfPct = Math.round((data.type_confidence || 0) * 100);
 
   updateHeroMetric(
     "gate",
