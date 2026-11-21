@@ -77,7 +77,7 @@ module top(
 ```
 
 CRITICAL RULES FOR THE VIRTUAL BOARD:
-1. `module top` MUST have the exact 6 ports above: `clk`, `sw[15:0]`, `btn[4:0]`, `led[15:0]`, `seg[6:0]`, `an[3:0]`.
+1. `module top` MUST have the exact 6 ports above: `clk`, `sw[15:0]`, `btn[4:0]`, `led[15:0]`, `seg[6:0]`, `an[3:0]`. Put the core user circuit in a clean helper submodule (e.g. `module user_circuit(...)`) instantiated inside `module top` so the user's circuit can also be synthesized separately from the board wrapper.
 2. **NO 100 MHz clock dividers!** The virtual board ticks `clk` directly at ~2 to 10 Hz so judges can watch clocked circuits live. Use `clk` directly for counters/FSMs/shift registers (never divide by 50,000,000 or 100,000,000!).
 3. **Reset & Initialization**: Initialize all state registers to 0 (e.g. `reg [3:0] count = 4'd0;`) AND wire `btn[0]` (Center button) as a synchronous active-high reset for sequential designs so there are never `X` (unknown) values.
 4. **Drive ALL outputs**: Never leave `led`, `seg`, or `an` undriven (`z`/`x`). Set unused `led` bits to `0`.

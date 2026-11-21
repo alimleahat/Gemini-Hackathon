@@ -23,6 +23,8 @@ const state = {
   liveSchematic: null,
   liveRecorder: null,
   liveRecordedChunks: [],
+  inkEngine: null,
+  showFullRawCam: false,
 
   // Saved Module Library (used by live frames + generation)
   savedModules: [],
@@ -202,6 +204,28 @@ function bindInputEvents() {
 
 // --- Live Camera Mirroring (Continuity Camera / Webcam) ---
 function bindLiveCameraEvents() {
+  if (window.FastInkEngine) {
+    state.inkEngine = window.FastInkEngine.create({
+      videoEl: $("live-video"),
+      outCanvas: $("live-ink-canvas"),
+      fpsEl: $("live-ink-fps"),
+      threshold: Number($("ink-thresh-slider").value) || 24,
+      targetFps: 25,
+    });
+  }
+  $("ink-thresh-slider").addEventListener("input", (e) => {
+    const v = Number(e.target.value);
+    $("ink-thresh-val").textContent = String(v);
+    if (state.inkEngine) state.inkEngine.setThreshold(v);
+  });
+  const toggleRaw = () => {
+    state.showFullRawCam = !state.showFullRawCam;
+    $("live-video").classList.toggle("full-raw", state.showFullRawCam);
+    $("btn-toggle-raw-cam").textContent = state.showFullRawCam ? "Show Digital Ink" : "Show Raw Cam";
+  };
+  $("btn-toggle-raw-cam").addEventListener("click", toggleRaw);
+  $("live-video").addEventListener("click", toggleRaw);
+
   $("btn-refresh-cameras").addEventListener("click", () => populateCameraList(true));
   $("camera-select").addEventListener("change", async () => {
     if (state.liveMirroring) {
@@ -264,7 +288,9 @@ async function openLiveVideoStream(deviceId) {
   const video = $("live-video");
   video.srcObject = stream;
   await video.play();
+  video.classList.remove("hidden");
   $("live-video-placeholder").classList.add("hidden");
+  if (state.inkEngine) state.inkEngine.start();
 
   // Refresh camera list now that permission is granted so real labels (e.g. iPhone) appear
   await populateCameraList(false);
@@ -275,6 +301,8 @@ async function openLiveVideoStream(deviceId) {
 }
 
 function stopLiveVideoStream() {
+  if (state.inkEngine) state.inkEngine.stop();
+  $("live-video").classList.add("hidden");
   if (state.liveStream) {
     state.liveStream.getTracks().forEach((t) => t.stop());
     state.liveStream = null;
@@ -963,16 +991,45 @@ function renderSynthesisStage(status, data) {
   }
 
   setCardStatus("synthesis", "done", `Done (${(data.duration_ms / 1000).toFixed(1)}s)`);
+  const logicTotal = data.logic_total ?? ((data.luts || 0) + (data.ffs || 0) + (data.carries || 0));
+  const boardIo = data.board_io ?? data.ios ?? 0;
+  const co = data.circuit_only || {};
+
   const pills = Object.entries(data.cells_by_type || {})
     .sort((a, b) => b[1] - a[1])
     .map(([k, v]) => `<span class="cell-pill">${escapeHtml(k)}: <strong>${v}</strong></span>`)
     .join("");
 
+  const circuitOnlyHtml = co.ok
+    ? `
+      <div class="synth-subbox">
+        <div class="synth-subbox-title">${escapeHtml(co.label || "User Circuit Only (no board wrapper)")}</div>
+        <div class="metric-grid" style="margin-bottom:0">
+          <div class="metric-tile">
+            <div class="metric-label">Circuit LUTs</div>
+            <div class="metric-value cyan">${co.luts}</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-label">Circuit FFs</div>
+            <div class="metric-value green">${co.ffs}</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-label">Circuit Logic</div>
+            <div class="metric-value">${co.logic_total}</div>
+          </div>
+        </div>
+      </div>`
+    : "";
+
   $("body-synthesis").innerHTML = `
     <div class="metric-grid">
+      <div class="metric-tile" style="border-color:rgba(56,189,248,0.45)">
+        <div class="metric-label">Logic (LUT+FF+Carry)</div>
+        <div class="metric-value cyan">${logicTotal}</div>
+      </div>
       <div class="metric-tile">
         <div class="metric-label">LUTs</div>
-        <div class="metric-value cyan">${data.luts}</div>
+        <div class="metric-value">${data.luts}</div>
       </div>
       <div class="metric-tile">
         <div class="metric-label">Flip-Flops</div>
@@ -982,11 +1039,12 @@ function renderSynthesisStage(status, data) {
         <div class="metric-label">Carry Chains</div>
         <div class="metric-value amber">${data.carries}</div>
       </div>
-      <div class="metric-tile">
-        <div class="metric-label">Total Cells</div>
-        <div class="metric-value">${data.total_cells}</div>
+      <div class="metric-tile" style="opacity:0.82">
+        <div class="metric-label">Board I/O (fixed cost)</div>
+        <div class="metric-value" style="color:var(--muted)">${boardIo}</div>
       </div>
     </div>
+    ${circuitOnlyHtml}
     <div class="cell-pills">${pills}</div>
   `;
 }

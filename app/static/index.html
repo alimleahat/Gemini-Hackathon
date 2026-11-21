@@ -111,20 +111,31 @@
           <div class="live-split">
             <div class="live-pane">
               <div class="pane-label">
-                <span>PAPER CAMERA FEED</span>
-                <span id="live-gate-pill" class="mini-pill">Idle</span>
+                <span>LIVE DIGITAL INK (LOCAL)</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span id="live-ink-fps" class="mini-pill">Idle</span>
+                  <span id="live-gate-pill" class="mini-pill">Gate: Idle</span>
+                </div>
               </div>
-              <div class="live-video-box">
-                <video id="live-video" autoplay playsinline muted></video>
+              <div class="live-video-box" id="live-ink-box">
+                <canvas id="live-ink-canvas" class="ink-canvas"></canvas>
+                <video id="live-video" class="pip-video hidden" autoplay playsinline muted title="Click to toggle Raw Camera / Digital Ink"></video>
                 <div id="live-video-placeholder" class="live-placeholder">
                   Pick your iPhone (Continuity Camera) or webcam above, then click <strong>Start Live Mirror</strong>.
                 </div>
+              </div>
+              <div class="ink-controls">
+                <label class="ink-slider-label">
+                  <span>Ink Threshold: <strong id="ink-thresh-val">24</strong></span>
+                  <input type="range" id="ink-thresh-slider" min="10" max="55" value="24" />
+                </label>
+                <button type="button" id="btn-toggle-raw-cam" class="btn-link">Show Raw Cam</button>
               </div>
             </div>
 
             <div class="live-pane">
               <div class="pane-label">
-                <span>LIVE DIGITAL SCHEMATIC</span>
+                <span>CLEAN SCHEMATIC (ELK + GEMINI)</span>
                 <span id="live-reader-pill" class="mini-pill">gemini-4-hydrogen</span>
               </div>
               <div id="live-schematic-canvas" class="schematic-box"></div>
@@ -426,6 +437,8 @@
   </div>
 
   <canvas id="capture-canvas" hidden></canvas>
+  <script src="/static/elk.bundled.js"></script>
+  <script src="/static/ink.js"></script>
   <script src="/static/schematic.js"></script>
   <script src="/static/app.js"></script>
 </body>

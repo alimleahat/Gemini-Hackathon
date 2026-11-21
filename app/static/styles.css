@@ -1488,5 +1488,72 @@ body {
   color: #bae6fd;
 }
 
+/* ================= FAST INK LAYER & SYNTHESIS SUBBOX ================= */
+.ink-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.pip-video {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 30%;
+  aspect-ratio: 16 / 10;
+  border-radius: 7px;
+  border: 1.5px solid rgba(56, 189, 248, 0.7);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  z-index: 4;
+  object-fit: cover;
+}
+
+.pip-video.full-raw {
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  border: none;
+}
+
+.ink-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.ink-slider-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ink-slider-label input {
+  width: 85px;
+}
+
+.synth-subbox {
+  margin: 10px 0 8px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(14, 165, 233, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.synth-subbox-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+}
+
+
 
 
