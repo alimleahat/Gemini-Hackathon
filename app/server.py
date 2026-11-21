@@ -624,7 +624,7 @@ def main() -> None:
 
     server = ThreadingHTTPServer((host, port), AppHandler)
     url = f"http://{host}:{port}"
-    print(f"\n  Paper-to-FPGA Virtual Board is running at: {url}\n")
+    print(f"\n  Sketch2Silicon is running at: {url}\n")
     print("  Press Ctrl+C to stop.\n", flush=True)
     try:
         server.serve_forever()

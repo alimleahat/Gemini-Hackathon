@@ -17,7 +17,7 @@ from app.pipeline.tester import _strip_code_fences
 
 BASYS3_XDC = """## ============================================================================
 ## Basys 3 (Artix-7 xc7a35tcpg236-1) Master Constraints for module top
-## STATUS: UNTESTED ON HARDWARE (auto-generated from Paper-to-FPGA app)
+## STATUS: UNTESTED ON HARDWARE (auto-generated from Sketch2Silicon)
 ## ============================================================================
 
 ## 100 MHz Clock (W5)
@@ -119,7 +119,7 @@ puts "Done! Bitstream (if successful): [file join $proj_dir $proj_name.runs impl
 
 
 def _make_readme(circuit_name: str) -> str:
-    return f"""Paper-to-FPGA Vivado Export: {circuit_name}
+    return f"""Sketch2Silicon Vivado Export: {circuit_name}
 ============================================================
 STATUS: UNTESTED ON HARDWARE
 
