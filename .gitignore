@@ -13,6 +13,7 @@ __pycache__/
 
 # Cloned third-party benchmark repo
 pilot/verilog-eval/
+pilot_cvdp/cvdp_benchmark/
 
 # macOS
 .DS_Store
