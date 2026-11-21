@@ -216,14 +216,14 @@ body.layout-board .hero-vision-dock {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
 .cam-preview-video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
