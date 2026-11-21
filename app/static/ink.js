@@ -43,9 +43,9 @@ window.FastInkEngine = (function () {
     const minFrameMs = Math.round(1000 / targetFps);
 
     function drawIdleGrid() {
-      outCtx.fillStyle = "#060b14";
+      outCtx.fillStyle = "#090912";
       outCtx.fillRect(0, 0, INK_W, INK_H);
-      outCtx.strokeStyle = "rgba(56, 189, 248, 0.08)";
+      outCtx.strokeStyle = "rgba(167, 139, 250, 0.08)";
       outCtx.lineWidth = 1;
       for (let x = 0; x < INK_W; x += 24) {
         outCtx.beginPath();
@@ -59,10 +59,10 @@ window.FastInkEngine = (function () {
         outCtx.lineTo(INK_W, y);
         outCtx.stroke();
       }
-      outCtx.fillStyle = "#64748b";
-      outCtx.font = "14px ui-monospace, monospace";
+      outCtx.fillStyle = "#7c7e94";
+      outCtx.font = "13px Inter, -apple-system, sans-serif";
       outCtx.textAlign = "center";
-      outCtx.fillText("Live digital ink (25-30 fps) starts with camera", INK_W / 2, INK_H / 2);
+      outCtx.fillText("Live digital ink starts with camera", INK_W / 2, INK_H / 2);
     }
 
     function tick(now) {

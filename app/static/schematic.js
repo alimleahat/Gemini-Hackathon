@@ -193,7 +193,7 @@ window.SchematicRenderer = (function () {
       viewBox: `0 0 ${W} ${H}`,
       class: compact ? "schematic-svg compact" : "schematic-svg",
     });
-    svg.appendChild(el("rect", { x: 0, y: 0, width: W, height: H, fill: "#070c15", rx: 10 }));
+    svg.appendChild(el("rect", { x: 0, y: 0, width: W, height: H, fill: "#090912", rx: 10 }));
     svg.appendChild(
       el(
         "text",
@@ -201,11 +201,11 @@ window.SchematicRenderer = (function () {
           x: W / 2,
           y: H / 2,
           "text-anchor": "middle",
-          fill: "#64748b",
-          "font-size": compact ? 11 : 15,
-          "font-family": "ui-monospace, monospace",
+          fill: "#7c7e94",
+          "font-size": compact ? 11 : 14,
+          "font-family": "Inter, -apple-system, sans-serif",
         },
-        compact ? "No preview" : "Waiting for clear drawing on camera..."
+        compact ? "No preview" : "Waiting for circuit drawing..."
       )
     );
     container.appendChild(svg);
@@ -241,14 +241,14 @@ window.SchematicRenderer = (function () {
       el("path", {
         d: compact ? "M 16 0 L 0 0 0 16" : "M 24 0 L 0 0 0 24",
         fill: "none",
-        stroke: "rgba(56, 189, 248, 0.08)",
+        stroke: "rgba(167, 139, 250, 0.08)",
         "stroke-width": 1,
       })
     );
     defs.appendChild(pat);
     svg.appendChild(defs);
 
-    svg.appendChild(el("rect", { x: 0, y: 0, width: W, height: H, fill: "#070c15", rx: 10 }));
+    svg.appendChild(el("rect", { x: 0, y: 0, width: W, height: H, fill: "#090912", rx: 10 }));
     svg.appendChild(el("rect", { x: 0, y: 0, width: W, height: H, fill: `url(#${gridId})`, rx: 10 }));
 
     // Map laid-out node rectangles by ID

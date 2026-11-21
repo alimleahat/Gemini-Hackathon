@@ -250,7 +250,7 @@ class VirtualFPGABoard3D {
     const h = this.container.clientHeight || 420;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color("#0b1018");
+    this.scene.background = new THREE.Color("#06060b");
 
     this.camera = new THREE.PerspectiveCamera(36, w / h, 0.1, 100);
     this.camera.position.set(0.0, 9.8, 10.6);

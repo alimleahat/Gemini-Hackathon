@@ -59,6 +59,7 @@ const $ = (id) => document.getElementById(id);
 async function init() {
   buildVirtualBoardDOM();
   init3DBoard();
+  bindStudioLayoutEvents();
   bindInputEvents();
   bindLiveCameraEvents();
   bindModulesEvents();
@@ -169,11 +170,12 @@ function syncRunBarVisibility() {
 }
 
 function bindInputEvents() {
-  document.querySelectorAll(".tab-btn").forEach((btn) => {
+  document.querySelectorAll(".input-mode-tabs .tab-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const tab = btn.dataset.tab;
+      if (!tab) return;
       state.inputMode = tab;
-      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      document.querySelectorAll(".input-mode-tabs .tab-btn").forEach((b) => b.classList.toggle("active", b === btn));
       $("panel-live").classList.toggle("active", tab === "live");
       $("panel-photo").classList.toggle("active", tab === "photo");
       $("panel-text").classList.toggle("active", tab === "text");
@@ -672,6 +674,116 @@ function bindToggleEvents() {
   syncBaselineUI();
 }
 
+// --- Studio Layout, Top Pop-Ups, Hero Metrics & Timeline Helpers (Visual Only) ---
+const activeToasts = new Map();
+
+function bindStudioLayoutEvents() {
+  // Stage layout switcher (3-Hero / Board Only / Vision Focus)
+  document.querySelectorAll("[data-stage-layout]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.stageLayout;
+      document.body.classList.remove("layout-split", "layout-board", "layout-vision");
+      document.body.classList.add(`layout-${mode}`);
+      document.querySelectorAll("[data-stage-layout]").forEach((b) =>
+        b.classList.toggle("active", b === btn)
+      );
+    });
+  });
+
+  // Floating sidebar collapse / expand
+  const collapseBtn = $("btn-sidebar-collapse");
+  const expandBtn = $("btn-sidebar-expand");
+  if (collapseBtn && expandBtn) {
+    collapseBtn.addEventListener("click", () => {
+      document.body.classList.add("sidebar-collapsed");
+      expandBtn.classList.remove("hidden");
+    });
+    expandBtn.addEventListener("click", () => {
+      document.body.classList.remove("sidebar-collapsed");
+      expandBtn.classList.add("hidden");
+    });
+  }
+
+  // Timeline rows: click to expand/collapse stage detail drawer (collapsed by default)
+  document.querySelectorAll("[data-expand-stage]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const stage = btn.dataset.expandStage;
+      const drawer = $(`card-${stage}`);
+      if (!drawer) return;
+      const body = $(`body-${stage}`);
+      if (!body || !body.innerHTML.trim()) return;
+      drawer.classList.toggle("hidden");
+    });
+  });
+}
+
+function showTopToast(key, { title, subtitle = "", status = "running", autoDismissMs = 0 }) {
+  const stack = $("toast-stack");
+  if (!stack) return;
+
+  let entry = activeToasts.get(key);
+  if (entry && entry.timer) {
+    clearTimeout(entry.timer);
+    entry.timer = null;
+  }
+
+  if (!entry) {
+    const el = document.createElement("div");
+    el.className = `toast-pill ${status}`;
+    el.innerHTML = `
+      <span class="toast-dot"></span>
+      <span class="toast-title"></span>
+      <span class="toast-sub"></span>
+    `;
+    el.addEventListener("click", () => dismissTopToast(key));
+    stack.prepend(el);
+    entry = { el, timer: null };
+    activeToasts.set(key, entry);
+
+    // Keep top stack sleek (max 3 visible pop-ups)
+    while (stack.children.length > 3) {
+      const last = stack.lastElementChild;
+      if (last) last.remove();
+    }
+  }
+
+  entry.el.className = `toast-pill ${status}`;
+  entry.el.querySelector(".toast-title").textContent = title;
+  const subEl = entry.el.querySelector(".toast-sub");
+  subEl.textContent = subtitle;
+  subEl.classList.toggle("hidden", !subtitle);
+
+  if (autoDismissMs > 0) {
+    entry.timer = setTimeout(() => dismissTopToast(key), autoDismissMs);
+  }
+}
+
+function dismissTopToast(key) {
+  const entry = activeToasts.get(key);
+  if (!entry) return;
+  if (entry.timer) clearTimeout(entry.timer);
+  activeToasts.delete(key);
+  entry.el.classList.add("leaving");
+  setTimeout(() => entry.el.remove(), 220);
+}
+
+function setStageTiming(stage, text) {
+  const el = $(`time-${stage}`);
+  if (el) el.textContent = text || "";
+}
+
+function updateHeroMetric(which, text, tone = "", sub = null) {
+  const valEl = $(`kpi-${which}`);
+  if (valEl) {
+    valEl.textContent = text;
+    valEl.className = `kpi-value ${tone}`.trim();
+  }
+  if (sub !== null) {
+    const subEl = $(`kpi-${which}-sub`);
+    if (subEl) subEl.textContent = sub;
+  }
+}
+
 // --- Stepper & Stage Card Helpers ---
 function setStepper(stepName, status) {
   const pill = document.querySelector(`.step-pill[data-step="${stepName}"]`);
@@ -681,8 +793,7 @@ function setStepper(stepName, status) {
 }
 
 function setCardStatus(stage, status, label) {
-  const card = $(`card-${stage}`);
-  if (card) card.classList.remove("hidden");
+  // Keep stage detail drawers collapsed by default; users click a timeline row to expand
   const badge = $(`status-${stage}`);
   if (badge) {
     badge.className = `status-badge ${status}`;
@@ -697,10 +808,20 @@ function resetPipelineUI() {
     if (c) c.classList.add("hidden");
     const b = $(`body-${s}`);
     if (b) b.innerHTML = "";
+    const badge = $(`status-${s}`);
+    if (badge) {
+      badge.className = "status-badge";
+      badge.textContent = "Idle";
+    }
+    setStageTiming(s, "");
     setStepper(s, "");
   });
+  setStageTiming("board", "");
   setStepper("input", "done");
   setStepper("board", "");
+  updateHeroMetric("test", "—", "");
+  updateHeroMetric("logic", "—", "", "LUT / FF");
+  updateHeroMetric("gate", "—", "", "Decision 1");
   stopClock();
 }
 
@@ -797,11 +918,24 @@ async function startPipeline(liveOverride = null) {
 
 function handleSSEEvent(eventName, payload) {
   if (eventName === "error") {
+    showTopToast("pipeline", {
+      title: "Pipeline Error",
+      subtitle: payload.message || "Backend error",
+      status: "error",
+      autoDismissMs: 7000,
+    });
     alert("Backend error: " + payload.message);
     return;
   }
   if (eventName === "complete") {
-    $("run-timer").textContent = `${(payload.total_duration_ms / 1000).toFixed(1)}s • Saved ${payload.log_file}`;
+    const sec = (payload.total_duration_ms / 1000).toFixed(1);
+    $("run-timer").textContent = `${sec}s • Saved ${payload.log_file}`;
+    showTopToast("pipeline", {
+      title: `Build Complete (${sec}s)`,
+      subtitle: state.latestCircuitName || payload.log_file || "",
+      status: "done",
+      autoDismissMs: 5500,
+    });
     return;
   }
   if (eventName !== "stage") return;
@@ -820,17 +954,38 @@ function handleSSEEvent(eventName, payload) {
 // --- Stage Renderers ---
 function renderGateStage(status, data) {
   if (status === "running") {
-    setCardStatus("gate", "running", "Evaluating...");
+    setCardStatus("gate", "running", "Running");
+    showTopToast("pipeline", {
+      title: "Readability Gate",
+      subtitle: $("tag-model-gate")?.textContent || "gemini-decision-1",
+      status: "running",
+    });
     $("body-gate").innerHTML = `<p class="muted">Checking readability and classifying circuit type with Decision 1...</p>`;
     return;
   }
 
   const passed = status === "done";
-  setCardStatus("gate", passed ? "done" : "rejected", passed ? "Passed" : "Retake Needed");
+  setCardStatus("gate", passed ? "done" : "rejected", passed ? "Pass" : "Retake");
+  if (data.duration_ms != null) {
+    setStageTiming("gate", `${(data.duration_ms / 1000).toFixed(1)}s`);
+  }
 
   const readPct = Math.round((data.readable_prob || 0) * 100);
   const confPct = Math.round((data.readable_confidence || 0) * 100);
   const typeConfPct = Math.round((data.type_confidence || 0) * 100);
+
+  updateHeroMetric(
+    "gate",
+    `${confPct}%`,
+    passed ? "accent" : "fail",
+    data.circuit_type_label || "Decision 1"
+  );
+  showTopToast("pipeline", {
+    title: passed ? `Gate Passed · ${confPct}%` : `Gate Rejected · ${readPct}%`,
+    subtitle: data.circuit_type_label || "Decision 1",
+    status: passed ? "done" : "error",
+    autoDismissMs: passed ? 0 : 6000,
+  });
 
   let probsHtml = "";
   if (data.type_probabilities) {
@@ -870,17 +1025,29 @@ function renderGateStage(status, data) {
 
 function renderGenerateStage(status, data) {
   if (status === "running") {
-    setCardStatus("generate", "running", "Generating Design...");
+    setCardStatus("generate", "running", "Running");
+    showTopToast("pipeline", {
+      title: "Generating Verilog",
+      subtitle: $("tag-model-generate")?.textContent || "gemini-4-neon",
+      status: "running",
+    });
     $("body-generate").innerHTML = `<p class="muted">Reading diagram, mapping virtual board pins, and writing synthesizable Verilog design (design.v only)...</p>`;
     return;
   }
 
-  setCardStatus("generate", "done", `Done (${(data.duration_ms / 1000).toFixed(1)}s)`);
+  const sec = (data.duration_ms / 1000).toFixed(1);
+  setCardStatus("generate", "done", "Done");
+  setStageTiming("generate", `${sec}s`);
+  showTopToast("pipeline", {
+    title: `Generated ${data.circuit_name || "Design"}`,
+    subtitle: `${sec}s · ${$("tag-model-generate")?.textContent || "gemini-4-neon"}`,
+    status: "done",
+  });
   state.latestVerilog = data.verilog_code;
   state.latestCircuitName = data.circuit_name;
   $("btn-export-vivado").disabled = false;
   $("body-generate").innerHTML = `
-    <h3 style="margin:0 0 6px;font-size:1.15rem">${escapeHtml(data.circuit_name)}</h3>
+    <h3 style="margin:0 0 6px;font-size:1rem">${escapeHtml(data.circuit_name)}</h3>
     <p class="muted" style="margin-bottom:10px">${escapeHtml(data.design_summary)}</p>
     <details class="code-details">
       <summary>View Verilog Design (design.v — gemini-4-neon)</summary>
@@ -893,10 +1060,20 @@ function renderGenerateStage(status, data) {
 function renderTestStage(status, data, substage) {
   if (status === "running") {
     if (substage === "generating_tb") {
-      setCardStatus("test", "running", "Writing Testbench...");
+      setCardStatus("test", "running", "Testbench");
+      showTopToast("pipeline", {
+        title: "Writing Independent Testbench",
+        subtitle: "gemini-4-hydrogen",
+        status: "running",
+      });
       $("body-test").innerHTML = `<p class="muted"><strong>gemini-4-hydrogen</strong> is writing an independent testbench from the drawing &amp; pin mapping (without seeing Neon's Verilog)...</p>`;
     } else {
-      setCardStatus("test", "running", "Simulating...");
+      setCardStatus("test", "running", "Simulating");
+      showTopToast("pipeline", {
+        title: "Running Simulation",
+        subtitle: "iverilog + vvp",
+        status: "running",
+      });
       $("body-test").innerHTML = `<p class="muted">Compiling and simulating Neon's design against Hydrogen's independent testbench with Icarus Verilog...</p>`;
     }
     return;
@@ -907,6 +1084,13 @@ function renderTestStage(status, data, substage) {
     state.latestTestbench = data.testbench_code;
   }
   setCardStatus("test", ok ? "done" : "error", ok ? "PASS" : "FAIL");
+  setStageTiming("test", `${data.duration_ms}ms`);
+  updateHeroMetric("test", ok ? "PASS" : "FAIL", ok ? "pass" : "fail");
+  showTopToast("pipeline", {
+    title: ok ? "Simulation PASS" : "Simulation FAIL",
+    subtitle: `${data.duration_ms}ms · ${data.tb_model || "gemini-4-hydrogen"}`,
+    status: ok ? "done" : "error",
+  });
   const logOutput = [data.stdout, data.stderr].filter(Boolean).join("\n\n") || "(no output)";
 
   $("body-test").innerHTML = `
@@ -925,13 +1109,13 @@ function renderTestStage(status, data, substage) {
       </div>
     </div>
     <p class="muted">${escapeHtml(data.summary)}</p>
-    ${data.tb_plan ? `<p class="muted" style="margin-top:6px;font-size:0.86rem"><strong>Independent Test Plan (${escapeHtml(data.tb_model || "gemini-4-hydrogen")}):</strong> ${escapeHtml(data.tb_plan)}</p>` : ""}
+    ${data.tb_plan ? `<p class="muted" style="margin-top:6px;font-size:0.84rem"><strong>Independent Test Plan (${escapeHtml(data.tb_model || "gemini-4-hydrogen")}):</strong> ${escapeHtml(data.tb_plan)}</p>` : ""}
     ${data.testbench_code ? `
     <details class="code-details">
       <summary>View Independent Testbench (tb.v — ${escapeHtml(data.tb_model || "gemini-4-hydrogen")})</summary>
       <pre id="code-tb">${escapeHtml(data.testbench_code)}</pre>
     </details>` : ""}
-    <details class="code-details" ${ok ? "" : "open"}>
+    <details class="code-details">
       <summary>Compiler &amp; Simulation Output</summary>
       <pre>${escapeHtml(logOutput)}</pre>
     </details>
@@ -940,12 +1124,17 @@ function renderTestStage(status, data, substage) {
 
 function renderImproveStage(status, data) {
   if (status === "skipped") {
-    setCardStatus("improve", "skipped", "Skipped");
+    setCardStatus("improve", "skipped", "Skip");
     $("body-improve").innerHTML = `<p class="muted">${escapeHtml(data.reason)}</p>`;
     return;
   }
   if (status === "running") {
-    setCardStatus("improve", "running", "Fixing Errors...");
+    setCardStatus("improve", "running", "Fixing");
+    showTopToast("pipeline", {
+      title: "Improve Loop",
+      subtitle: $("tag-model-improve")?.textContent || "gemini-4-hydrogen",
+      status: "running",
+    });
     $("body-improve").innerHTML = `<div id="improve-rounds-list"></div><p class="muted" id="improve-working">Sending errors back to model (up to 5 rounds)...</p>`;
     return;
   }
@@ -962,13 +1151,19 @@ function renderImproveStage(status, data) {
       <p class="muted">${escapeHtml(data.fix_summary)}</p>
     `;
     list.appendChild(item);
+    showTopToast("pipeline", {
+      title: `Improve Round ${data.round}`,
+      subtitle: ok ? "PASS" : "Retrying...",
+      status: ok ? "done" : "running",
+    });
     return;
   }
   if (status === "done") {
     const working = $("improve-working");
     if (working) working.remove();
     const ok = !!data.passed;
-    setCardStatus("improve", ok ? "done" : "error", ok ? `Fixed (${data.rounds_used}r)` : `Failed (${data.rounds_used}r)`);
+    setCardStatus("improve", ok ? "done" : "error", ok ? `Fixed (${data.rounds_used}r)` : `Fail (${data.rounds_used}r)`);
+    if (ok) updateHeroMetric("test", "PASS", "pass");
     if (data.final_verilog) {
       state.latestVerilog = data.final_verilog;
       if ($("code-verilog")) $("code-verilog").textContent = data.final_verilog;
@@ -982,22 +1177,27 @@ function renderImproveStage(status, data) {
 
 function renderLintStage(status, data) {
   if (status === "skipped") {
-    setCardStatus("lint", "skipped", "Skipped");
+    setCardStatus("lint", "skipped", "Skip");
     $("body-lint").innerHTML = `<p class="muted">${escapeHtml(data.reason)}</p>`;
     return;
   }
   if (status === "running") {
-    setCardStatus("lint", "running", "Linting...");
+    setCardStatus("lint", "running", "Linting");
+    showTopToast("pipeline", {
+      title: "Checking Design Issues",
+      subtitle: "yosys + gemini-4-neon",
+      status: "running",
+    });
     $("body-lint").innerHTML = `<p class="muted">Checking for floating inputs, unconnected outputs, combinational loops, accidental latches, and width mismatches...</p>`;
     return;
   }
 
   const issues = data.issues || [];
   if (data.clean || !issues.length) {
-    setCardStatus("lint", "done", "Clean (0 Issues)");
+    setCardStatus("lint", "done", "Clean");
     $("body-lint").innerHTML = `
       <div class="alert-box success">${escapeHtml(data.summary || "No design issues found.")}</div>
-      <p class="muted" style="margin-top:8px;font-size:0.82rem">Checked with: ${escapeHtml((data.tools_used || []).join(", "))}</p>
+      <p class="muted" style="margin-top:8px;font-size:0.8rem">Checked with: ${escapeHtml((data.tools_used || []).join(", "))}</p>
     `;
     return;
   }
@@ -1021,8 +1221,8 @@ function renderLintStage(status, data) {
         <strong>${escapeHtml(iss.title)}</strong>
         <span class="issue-cat">${escapeHtml((iss.category || "issue").replace(/_/g, " "))}</span>
       </div>
-      <p style="margin:0;font-size:0.92rem">${escapeHtml(iss.plain_explanation)}</p>
-      <div class="issue-fix">💡 Fix: ${escapeHtml(iss.how_to_fix)}</div>
+      <p style="margin:0;font-size:0.84rem">${escapeHtml(iss.plain_explanation)}</p>
+      <div class="issue-fix">Fix: ${escapeHtml(iss.how_to_fix)}</div>
     `;
     card.addEventListener("click", () => {
       if (state.liveSchematic && window.SchematicRenderer) {
@@ -1045,12 +1245,17 @@ function renderLintStage(status, data) {
 
 function renderSynthesisStage(status, data) {
   if (status === "skipped") {
-    setCardStatus("synthesis", "skipped", "Skipped");
+    setCardStatus("synthesis", "skipped", "Skip");
     $("body-synthesis").innerHTML = `<p class="muted">${escapeHtml(data.reason)}</p>`;
     return;
   }
   if (status === "running") {
-    setCardStatus("synthesis", "running", "Synthesizing...");
+    setCardStatus("synthesis", "running", "Synth");
+    showTopToast("pipeline", {
+      title: "FPGA Synthesis",
+      subtitle: "yosys synth_xilinx",
+      status: "running",
+    });
     $("body-synthesis").innerHTML = `<p class="muted">Running Yosys synth_xilinx on module top...</p>`;
     return;
   }
@@ -1061,10 +1266,21 @@ function renderSynthesisStage(status, data) {
     return;
   }
 
-  setCardStatus("synthesis", "done", `Done (${(data.duration_ms / 1000).toFixed(1)}s)`);
+  const sec = (data.duration_ms / 1000).toFixed(1);
+  setCardStatus("synthesis", "done", "Done");
+  setStageTiming("synthesis", `${sec}s`);
   const logicTotal = data.logic_total ?? ((data.luts || 0) + (data.ffs || 0) + (data.carries || 0));
   const boardIo = data.board_io ?? data.ios ?? 0;
   const co = data.circuit_only || {};
+
+  const dispLuts = co.ok ? co.luts : (data.luts ?? 0);
+  const dispFfs = co.ok ? co.ffs : (data.ffs ?? 0);
+  updateHeroMetric("logic", `${dispLuts}/${dispFfs}`, "accent", "LUT / FF");
+  showTopToast("pipeline", {
+    title: `Synthesis · ${dispLuts} LUT / ${dispFfs} FF`,
+    subtitle: `${sec}s · yosys synth_xilinx`,
+    status: "done",
+  });
 
   const pills = Object.entries(data.cells_by_type || {})
     .sort((a, b) => b[1] - a[1])
@@ -1124,14 +1340,25 @@ function renderBoardStage(status, data) {
   if (status === "running") {
     setStepper("board", "running");
     $("status-board").className = "status-badge running";
-    $("status-board").textContent = "Loading...";
+    $("status-board").textContent = "Loading";
+    showTopToast("pipeline", {
+      title: "Loading Virtual FPGA",
+      subtitle: "Compiling live simulator",
+      status: "running",
+    });
     return;
   }
   if (status === "error") {
     setStepper("board", "error");
     $("status-board").className = "status-badge error";
-    $("status-board").textContent = "Unavailable";
+    $("status-board").textContent = "Error";
     $("led-sim-live").classList.remove("on");
+    showTopToast("pipeline", {
+      title: "Virtual Board Unavailable",
+      subtitle: "Simulation could not start",
+      status: "error",
+      autoDismissMs: 5000,
+    });
     return;
   }
 
@@ -1142,9 +1369,10 @@ function renderBoardStage(status, data) {
   syncSwitchDOM();
 
   setStepper("board", "done");
+  setStageTiming("board", "LIVE");
   $("status-board").className = "status-badge done";
   $("status-board").textContent = "LIVE";
-  $("board-title").textContent = data.circuit_name ? `Virtual Board — ${data.circuit_name}` : "Virtual FPGA Board";
+  $("board-title").textContent = data.circuit_name ? data.circuit_name : "Virtual FPGA Board";
   $("led-sim-live").classList.add("on");
 
   $("btn-clk-toggle").disabled = false;
@@ -1169,8 +1397,10 @@ function renderBoardStage(status, data) {
 
 function renderPinMapping(items) {
   const box = $("pin-map-box");
+  const badge = $("pin-count-badge");
+  if (badge) badge.textContent = String((items || []).length);
   if (!items || !items.length) {
-    box.innerHTML = `<h3>Board Pin Mapping</h3><p class="muted">No pin mapping provided.</p>`;
+    box.innerHTML = `<p class="muted">No pin mapping provided.</p>`;
     return;
   }
   const rows = items
@@ -1186,9 +1416,8 @@ function renderPinMapping(items) {
     .join("");
 
   box.innerHTML = `
-    <h3>Board Pin Mapping</h3>
     <table class="pin-table">
-      <thead><tr><th>Board Pin</th><th>Signal</th><th>Dir</th><th>Behavior</th></tr></thead>
+      <thead><tr><th>Pin</th><th>Signal</th><th>Dir</th><th>Behavior</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
@@ -1254,6 +1483,7 @@ function setBoardView(mode) {
   state.boardView = mode === "2d" ? "2d" : "3d";
   const is3d = state.boardView === "3d";
   $("board3d-wrap")?.classList.toggle("hidden", !is3d);
+  $("board2d-stage")?.classList.toggle("hidden", is3d);
   $("fpga-pcb")?.classList.toggle("hidden", is3d);
   $("btn-reset-cam3d")?.classList.toggle("hidden", !is3d);
   $("btn-view-3d")?.classList.toggle("active", is3d);
